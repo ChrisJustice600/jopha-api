@@ -6,7 +6,6 @@ const generateTokenHauth = async (req, res, next) => {
 
   const token = generateToken(user);
   res.status(200).json({ token });
-
 };
 
 module.exports = generateTokenHauth;
