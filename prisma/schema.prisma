@@ -1,0 +1,61 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id       Int        @id @default(autoincrement())
+  username String
+  email    String     @unique
+  password String
+  donation Donation[]
+  project  Project[]
+  role     Role       @default(USER)
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Project {
+  id              Int        @id @default(autoincrement())
+  titreProjet     String
+  description     String
+  photo           String?
+  objectif        Int
+  objectifFinance String
+  dateCreation    DateTime?
+  dateFin         DateTime?
+  statutProjet    String
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          Int
+  donation        Donation[]
+  paiement        Paiement[]
+}
+
+model Donation {
+  id         Int        @id @default(autoincrement())
+  montantDon Int
+  dateDon    DateTime
+  statutDon  String
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     Int
+  project    Project?   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId  Int
+  paiement   Paiement[]
+}
+
+model Paiement {
+  id             Int      @id @default(autoincrement())
+  datePaiement   DateTime
+  statutPaiement String
+  donation       Donation @relation(fields: [donationId], references: [id], onDelete: Cascade)
+  donationId     Int
+  Project        Project? @relation(fields: [projectId], references: [id])
+  projectId      Int?
+}
