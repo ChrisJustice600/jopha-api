@@ -11,13 +11,6 @@ const register = async (req, res) => {
     if (!username || !email || !password) {
       return res.status(400).json({ error: "Missing required fields" });
     }
-    // const emailRegex = new RegExp(
-    //   /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/
-    // );
-
-    // if (!emailRegex.test(email)) {
-    //   return res.json({ errorEmail: "email error" });
-    // }
 
     const salt = bcrypt.genSaltSync(10);
     const passwordHash = bcrypt.hashSync(password, salt);
@@ -62,6 +55,7 @@ async function signin(req, res) {
     res.cookie("token", token).json({
       username: user.username,
       email: user.email,
+      role: user.role,
     });
   } catch (error) {
     console.error(error);
