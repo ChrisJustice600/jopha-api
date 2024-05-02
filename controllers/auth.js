@@ -63,4 +63,8 @@ async function signin(req, res) {
   }
 }
 
-module.exports = { register, signin };
+async function logout(req, res) {
+  res.cookie("token", "").json("ok");
+}
+
+module.exports = { register, signin, logout };
