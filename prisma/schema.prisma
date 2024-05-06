@@ -24,14 +24,13 @@ enum Role {
 
 model Project {
   id              Int        @id @default(autoincrement())
-  titreProjet     String
-  description     String
+  titre     String?
+  description     String?
   photo           String?
-  objectif        Int
-  objectifFinance String
-  dateCreation    DateTime?
+  objectif        Int?
+  dateCreation    DDateTime @default(now())
   dateFin         DateTime?
-  statutProjet    String
+  statut    String
   user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId          Int
   donation        Donation[]

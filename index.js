@@ -3,6 +3,8 @@ const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 dotenv.config();
+const multer = require("multer");
+const uploadMiddleware = multer({ dest: "uploads/" });
 
 const PORT = process.env.PORT;
 const app = express();

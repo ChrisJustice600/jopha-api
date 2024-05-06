@@ -1,18 +1,7 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-// const findUserByEmail = async (email) => {
-//   const user = await prisma.user.findFirst({
-//     where: {
-//       email,
-//     },
-//   });
-//   const users = user.email;
-//   // const passOk = compareCrypt(password, user.password);
-//   if (users) {
-//     return res.json({ users });
-//   }
-// };
+
 
 async function findUserByEmail(email) {
   try {
@@ -22,6 +11,18 @@ async function findUserByEmail(email) {
     return user;
   } catch (error) {
     console.error(error);
+    return null;
+  }
+}
+
+async function createRecord(data) {
+  try {
+    const createdRecord = await prisma.project.create({
+      data,
+    });
+    return createdRecord;
+  } catch (error) {
+    console.error(`Error creating record in ${modelName}:`, error);
     return null;
   }
 }
