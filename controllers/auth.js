@@ -6,7 +6,6 @@ const bcrypt = require("bcrypt");
 const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
-
     // Basic validation
     if (!username || !email || !password) {
       return res.status(400).json({ error: "Missing required fields" });

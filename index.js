@@ -3,14 +3,13 @@ const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 dotenv.config();
-const multer = require("multer");
-const uploadMiddleware = multer({ dest: "uploads/" });
 
 const PORT = process.env.PORT;
 const app = express();
 
 const authRouter = require("./Routes/auth");
 const usersRouter = require("./Routes/users");
+const { verifyToken } = require("./config/jwtconfig");
 app.use(cors({ credentials: true, origin: "http://localhost:5173" }));
 
 app.use(cookieParser());
@@ -21,6 +20,8 @@ app.use(
   })
 );
 app.use(express.json());
+
+// Configure Multer for file uploads
 
 app.use("/auth", authRouter);
 app.use("/users", usersRouter);

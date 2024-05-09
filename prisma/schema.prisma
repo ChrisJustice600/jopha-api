@@ -28,13 +28,19 @@ model Project {
   description     String?
   photo           String?
   objectif        Int?
-  dateCreation    DDateTime @default(now())
+  categorie     String?
+  dateCreation    DateTime @default(now())
   dateFin         DateTime?
-  statut    String
+  statut    Statut      @default(ENCOURS)
   user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId          Int
   donation        Donation[]
   paiement        Paiement[]
+}
+
+enum Statut {
+  ENCOURS
+  TERMINE
 }
 
 model Donation {
