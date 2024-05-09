@@ -27,7 +27,7 @@ model Project {
   titre     String?
   description     String?
   photo           String?
-  objectif        Int?
+  objectif        String?
   categorie     String?
   dateCreation    DateTime @default(now())
   dateFin         DateTime?

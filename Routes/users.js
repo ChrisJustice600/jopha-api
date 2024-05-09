@@ -26,8 +26,6 @@ const usersRouter = Router();
 usersRouter.get("/profile", checkUserAuthenticated, checkUserRole, getProfile);
 usersRouter.post(
   "/create/project",
-  // checkUserAuthenticated,
-  // checkUserRole,
   upload.single("file"),
   createProject
 );
