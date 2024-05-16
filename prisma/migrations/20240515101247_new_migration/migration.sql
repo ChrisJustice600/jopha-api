@@ -21,7 +21,7 @@ CREATE TABLE "Project" (
     "titre" TEXT,
     "description" TEXT,
     "photo" TEXT,
-    "objectif" INTEGER,
+    "objectif" TEXT,
     "categorie" TEXT,
     "dateCreation" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "dateFin" TIMESTAMP(3),

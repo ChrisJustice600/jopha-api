@@ -1,6 +1,7 @@
 const { verifyToken } = require("../config/jwtconfig");
 const fs = require("fs");
 const { createRecord, prisma } = require("../database/prisma");
+const cloudinary = require("../config/cloudinary");
 
 const getProfile = (req, res) => {
   const { token } = req.cookies;
@@ -27,15 +28,39 @@ const getAllUserProjects = async (req, res) => {
   }
 };
 
+async function findProjectWithId(req, res) {
+  try {
+    const id = parseInt(req.params.id);
+    console.log(id);
+    // Recherche du projet par ID avec l'utilisateur associé inclus
+    const projectid = await prisma.project.findUnique({
+      where: {
+        id: id,
+      },
+      include: {
+        user: {
+          select: {
+            username: true,
+          },
+        },
+      },
+    });
+    // console.log(projectid);
+    res.status(200).json(projectid);
+  } catch (error) {
+    console.error("Error finding project with user:", error);
+    throw error;
+  }
+}
+
 const createProject = async (req, res) => {
   const { token } = req.cookies;
 
   try {
-    const { originalname, path } = req.file;
-    const parts = originalname.split(".");
-    const ext = parts[parts.length - 1];
-    const newPath = path + "." + ext;
-    console.log(newPath);
+    const { path } = req.file;
+    const result = await cloudinary.uploader.upload(path);
+    const url = result.secure_url;
+    console.log(result.secure_url);
 
     const { token } = req.cookies;
     const isTokenValide = verifyToken(token);
@@ -46,7 +71,7 @@ const createProject = async (req, res) => {
         data: {
           titre,
           description: content,
-          photo: newPath,
+          photo: url,
           objectif,
           categorie,
           userId: isTokenValide.id,
@@ -63,4 +88,9 @@ const createProject = async (req, res) => {
   }
 };
 
-module.exports = { getProfile, createProject, getAllUserProjects };
+module.exports = {
+  getProfile,
+  createProject,
+  getAllUserProjects,
+  findProjectWithId,
+};

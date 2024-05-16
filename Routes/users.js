@@ -3,6 +3,7 @@ const {
   getProfile,
   createProject,
   getAllUserProjects,
+  findProjectWithId,
 } = require("../controllers/users");
 const { checkUserRole } = require("../middlewares/checkUserRole");
 const {
@@ -29,5 +30,6 @@ const usersRouter = Router();
 usersRouter.get("/profile", checkUserAuthenticated, getProfile);
 usersRouter.post("/create/project", upload.single("file"), createProject);
 usersRouter.get("/v/project", getAllUserProjects);
+usersRouter.get("/v/project/:id", findProjectWithId);
 
 module.exports = usersRouter;
