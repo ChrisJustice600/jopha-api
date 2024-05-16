@@ -21,8 +21,9 @@ app.use(
 );
 app.use(express.json());
 
-// Configure Multer for file uploads
-
+app.get("/", async (req, res) => {
+  res.send("Hello word");
+});
 app.use("/auth", authRouter);
 app.use("/users", usersRouter);
 
