@@ -10,14 +10,14 @@ const app = express();
 const authRouter = require("./Routes/auth");
 const usersRouter = require("./Routes/users");
 const { verifyToken } = require("./config/jwtconfig");
-// app.use(cors({ credentials: true, origin: "http://localhost:5173" }));
-
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "https://impact-ten.vercel.app");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  next();
-});
+app.use(
+  cors({
+    origin: "https://impact-ten.vercel.app/", // Remplacez par votre domaine Vercel
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true, // Si vous avez besoin d'envoyer des cookies ou des en-têtes d'authentification
+    optionsSuccessStatus: 204,
+  })
+);
 
 app.use(cookieParser());
 
