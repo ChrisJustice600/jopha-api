@@ -10,10 +10,8 @@ const app = express();
 const authRouter = require("./Routes/auth");
 const usersRouter = require("./Routes/users");
 const { verifyToken } = require("./config/jwtconfig");
-app.use(cors({ credentials: true, origin: "http://localhost:5173" }));
-app.use(
-  cors({ credentials: true, origin: "https://impact-beryl.vercel.app/" })
-);
+// app.use(cors({ credentials: true, origin: "http://localhost:5173" }));
+app.use(cors({ credentials: true, origin: "https://impact-ten.vercel.app//" }));
 
 app.use(cookieParser());
 
