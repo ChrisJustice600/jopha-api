@@ -15,10 +15,15 @@ model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
   password  String
-  role      String   @default("user")
+  role      Role     @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   notes     Note[] // Relation avec les notes créées par l'utilisateur
+}
+
+enum Role {
+  USER
+  ADMIN
 }
 
 model Groupage {

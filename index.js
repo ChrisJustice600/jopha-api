@@ -7,7 +7,7 @@ dotenv.config();
 const PORT = process.env.PORT;
 const app = express();
 
-// const authRouter = require("./src/routes/authRoutes");
+const authRouter = require("./src/routes/authRoutes");
 // const colisRouter = require("./src/routes/colisRoutes");
 // const groupageRouter = require("./src/routes/groupageRoutes");
 
@@ -32,7 +32,7 @@ app.use(express.json());
 app.get("/", async (req, res) => {
   res.send("Hello word");
 });
-// app.use("/auth", authRouter);
+app.use("/auth", authRouter);
 // app.use("/colis", colisRouter);
 // app.use("/groupage", groupageRouter);
 
