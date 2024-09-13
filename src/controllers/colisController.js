@@ -14,7 +14,7 @@
 
 // module.exports = { createColis };
 
-const { prisma, updateRecord, createRecord } = require("../../database/prisma");
+const { prisma, updateRecord } = require("../../database/prisma");
 
 const createColis = async (req, res) => {
   const { code, nom_complet, poids, telephone, transportType, airType } =
