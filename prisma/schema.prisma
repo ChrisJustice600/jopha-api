@@ -1,3 +1,5 @@
+// prisma/schema.prisma
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -7,60 +9,82 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// Modèles
+
 model User {
-  id       Int        @id @default(autoincrement())
-  username String
-  email    String     @unique
-  password String
-  donation Donation[]
-  project  Project[]
-  role     Role       @default(USER)
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  role      String   @default("user")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  notes     Note[] // Relation avec les notes créées par l'utilisateur
 }
 
-enum Role {
-  USER
-  ADMIN
+model Groupage {
+  id            Int            @id @default(autoincrement())
+  code          String         @unique
+  status        Status         @default(GROUPED)
+  transportType TransportType? // Aérien ou Maritime
+  airType       AirTransport? // Regulier ou Express (uniquement si transportType est Aérien)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  masterPacks   MasterPack[]   @relation("GroupageMasterPacks")
+  notes         Note[] // Relation avec les notes
 }
 
-model Project {
-  id              Int        @id @default(autoincrement())
-  titre     String?
-  description     String?
-  photo           String?
-  objectif        String?
-  categorie     String?
-  dateCreation    DateTime @default(now())
-  dateFin         DateTime?
-  statut    Statut      @default(ENCOURS)
-  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId          Int
-  donation        Donation[]
-  paiement        Paiement[]
+model MasterPack {
+  id         Int      @id @default(autoincrement())
+  numero     String?
+  poids      Int?
+  groupageId Int
+  groupage   Groupage @relation("GroupageMasterPacks", fields: [groupageId], references: [id])
+  colis      Colis[]  @relation("MasterPackColis")
 }
 
-enum Statut {
-  ENCOURS
-  TERMINE
+model Colis {
+  id            Int            @id @default(autoincrement())
+  code          String?        @unique
+  nom_complet   String
+  status        Status         @default(RECEIVED)
+  poids         Int?
+  telephone     String
+  masterPackId  Int
+  masterPack    MasterPack     @relation("MasterPackColis", fields: [masterPackId], references: [id])
+  transportType TransportType? // Le client choisit Aérien ou Maritime
+  airType       AirTransport? // Si le client choisit Aérien, il choisit Regulier ou Express
+  notes         Note[] // Relation avec les notes
 }
 
-model Donation {
-  id         Int        @id @default(autoincrement())
-  montantDon Int
-  dateDon    DateTime
-  statutDon  String
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId     Int
-  project    Project?   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId  Int
-  paiement   Paiement[]
+model Note {
+  id        Int      @id @default(autoincrement())
+  contenu   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+
+  colisId Int?
+  colis   Colis? @relation(fields: [colisId], references: [id])
+
+  groupageId Int?
+  groupage   Groupage? @relation(fields: [groupageId], references: [id])
 }
 
-model Paiement {
-  id             Int      @id @default(autoincrement())
-  datePaiement   DateTime
-  statutPaiement String
-  donation       Donation @relation(fields: [donationId], references: [id], onDelete: Cascade)
-  donationId     Int
-  Project        Project? @relation(fields: [projectId], references: [id])
-  projectId      Int?
+enum Status {
+  RECEIVED
+  GROUPED
+  IN_TRANSIT
+  ARRIVED
+  DELIVERED
+}
+
+enum TransportType {
+  AERIEN
+  MARITIME
+}
+
+enum AirTransport {
+  REGULIER
+  EXPRESS
 }

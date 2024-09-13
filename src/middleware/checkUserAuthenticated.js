@@ -1,10 +1,10 @@
-const { verifyToken } = require("../config/jwtconfig");
+const { verifyToken } = require("../../config/jwtconfig");
 
 checkUserAuthenticated = (req, res, next) => {
   const { token } = req.cookies;
 
-  if (!token){
-    return res.status(401).json({message : "Accès refusé"})
+  if (!token) {
+    return res.status(401).json({ message: "Accès refusé" });
   }
 
   const isTokenValide = verifyToken(token);
@@ -18,5 +18,4 @@ checkUserAuthenticated = (req, res, next) => {
   }
 };
 
-module.exports = checkUserAuthenticated
-
+module.exports = checkUserAuthenticated;
