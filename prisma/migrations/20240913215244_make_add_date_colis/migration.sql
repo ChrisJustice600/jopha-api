@@ -53,7 +53,9 @@ CREATE TABLE "Colis" (
     "status" "Status" NOT NULL DEFAULT 'RECEIVED',
     "poids" INTEGER,
     "telephone" TEXT NOT NULL,
-    "masterPackId" INTEGER NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "masterPackId" INTEGER,
     "transportType" "TransportType",
     "airType" "AirTransport",
 
@@ -86,7 +88,7 @@ CREATE UNIQUE INDEX "Colis_code_key" ON "Colis"("code");
 ALTER TABLE "MasterPack" ADD CONSTRAINT "MasterPack_groupageId_fkey" FOREIGN KEY ("groupageId") REFERENCES "Groupage"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Colis" ADD CONSTRAINT "Colis_masterPackId_fkey" FOREIGN KEY ("masterPackId") REFERENCES "MasterPack"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Colis" ADD CONSTRAINT "Colis_masterPackId_fkey" FOREIGN KEY ("masterPackId") REFERENCES "MasterPack"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Note" ADD CONSTRAINT "Note_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
