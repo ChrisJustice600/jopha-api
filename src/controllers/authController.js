@@ -1,6 +1,6 @@
-// const { comparePassword } = require("../config/bcryptConfig");
-// const { generateToken } = require("../config/jwtconfig");
-const { prisma } = require("../../database/prisma");
+// const { comparePassword } = require("../../bcryptConfigconfig/bcryptConfig");
+const { generateToken } = require("../../config/jwtconfig");
+const { prisma, findUserByEmail } = require("../../database/prisma");
 const bcrypt = require("bcrypt");
 
 const register = async (req, res) => {
@@ -43,4 +43,29 @@ const register = async (req, res) => {
   }
 };
 
-module.exports = { register };
+async function signin(req, res) {
+  try {
+    const { email, password } = req.body;
+    const user = await findUserByEmail(email);
+    console.log(user);
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email or password" }); // Handle invalid credentials
+    }
+    const isPasswordValid = bcrypt.compareSync(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Invalid email or password" }); // Handle invalid credentials
+    }
+
+    const token = generateToken(user);
+    res.cookie("token", token).json({
+      username: user.username,
+      email: user.email,
+      role: user.role,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: error });
+  }
+}
+module.exports = { register, signin };
