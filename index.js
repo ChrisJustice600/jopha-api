@@ -10,6 +10,7 @@ const app = express();
 const authRouter = require("./src/routes/authRoutes");
 const colisRouter = require("./src/routes/colisRoutes");
 const groupageRouter = require("./src/routes/groupageRoutes");
+const clientCode = require("./src/routes/clientCodeRouter");
 
 app.use(
   cors({
@@ -35,6 +36,7 @@ app.get("/", async (req, res) => {
 app.use("/auth", authRouter);
 app.use("/colis", colisRouter);
 app.use("/groupages", groupageRouter);
+app.use("/client", clientCode);
 
 app.get("/", (req, res) => {
   res.send("<h1>Bienvenue au serveur C3</h1>");
