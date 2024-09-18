@@ -1,45 +1,28 @@
 const { Router } = require("express");
-const {
-  createColis,
-  updateColis,
-  deleteColis,
-  addParcelInGroupage,
-  getParcelByGroupage,
-  getColisByMasterPack,
-  getMasterPacksByGroupage,
-} = require("../../src/controllers/colisController");
+const colisController = require("../../src/controllers/colisController");
 const checkUserAuthenticated = require("../../src/middleware/authMiddleware");
 
 const authRouter = Router();
+authRouter.use(checkUserAuthenticated);
 
-authRouter.post("/register", checkUserAuthenticated, createColis);
-authRouter.post("/update/:id", checkUserAuthenticated, updateColis);
-authRouter.post("/delete/:id", checkUserAuthenticated, deleteColis);
-authRouter.post(
-  "/addParcelInGroupage/",
-  checkUserAuthenticated,
-  addParcelInGroupage
-);
+authRouter.post("/register", colisController.createColis);
+authRouter.put("/update/:id", colisController.updateColis);
+authRouter.delete("/delete/:id", colisController.deleteColis);
+authRouter.post("/addParcelInGroupage/", colisController.addParcelInGroupage);
 
 // GET PARCEL/COLIS BY GROUPAGE
-authRouter.post(
-  "/getParcelByGroupage/",
-  checkUserAuthenticated,
-  getParcelByGroupage
-);
+authRouter.post("/getParcelByGroupage/", colisController.getParcelByGroupage);
 
 // GET PARCEL BY MASTERPACK
 authRouter.post(
   "/getColisByMasterPack /",
-  checkUserAuthenticated,
-  getColisByMasterPack
+  colisController.getColisByMasterPack
 );
 
 // GET PARCEL BY MASTERPACK
 authRouter.post(
   "/getMasterPacksByGroupage  /",
-  checkUserAuthenticated,
-  getMasterPacksByGroupage
+  colisController.getMasterPacksByGroupage
 );
 
 module.exports = authRouter;

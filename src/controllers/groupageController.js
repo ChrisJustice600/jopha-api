@@ -2,6 +2,8 @@ const { prisma } = require("../../database/prisma");
 
 const createGroupage = async (req, res) => {
   const { code } = req.body;
+  console.log(code);
+
   try {
     const groupage = await prisma.groupage.create({
       data: { code },

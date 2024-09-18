@@ -56,10 +56,23 @@ CREATE TABLE "Colis" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "masterPackId" INTEGER,
+    "groupageId" INTEGER,
     "transportType" "TransportType",
     "airType" "AirTransport",
+    "clientAvecCodeId" INTEGER,
 
     CONSTRAINT "Colis_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ClientAvecCode" (
+    "id" SERIAL NOT NULL,
+    "code" TEXT NOT NULL,
+    "nomAgence" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "ClientAvecCode_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -84,11 +97,20 @@ CREATE UNIQUE INDEX "Groupage_code_key" ON "Groupage"("code");
 -- CreateIndex
 CREATE UNIQUE INDEX "Colis_code_key" ON "Colis"("code");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "ClientAvecCode_code_key" ON "ClientAvecCode"("code");
+
 -- AddForeignKey
 ALTER TABLE "MasterPack" ADD CONSTRAINT "MasterPack_groupageId_fkey" FOREIGN KEY ("groupageId") REFERENCES "Groupage"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Colis" ADD CONSTRAINT "Colis_masterPackId_fkey" FOREIGN KEY ("masterPackId") REFERENCES "MasterPack"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Colis" ADD CONSTRAINT "Colis_groupageId_fkey" FOREIGN KEY ("groupageId") REFERENCES "Groupage"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Colis" ADD CONSTRAINT "Colis_clientAvecCodeId_fkey" FOREIGN KEY ("clientAvecCodeId") REFERENCES "ClientAvecCode"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Note" ADD CONSTRAINT "Note_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

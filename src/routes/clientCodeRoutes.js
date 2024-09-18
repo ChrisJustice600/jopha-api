@@ -1,7 +1,5 @@
 const { Router } = require("express");
-const {
-  createClientAvecCode,
-} = require("../../src/controllers/clientCodeController");
+const { createClientAvecCode } = require("../controllers/clientCodeController");
 
 const authRouter = Router();
 

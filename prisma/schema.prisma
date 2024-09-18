@@ -35,7 +35,9 @@ model Groupage {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   masterPacks   MasterPack[]   @relation("GroupageMasterPacks")
-  notes         Note[] // Relation avec les notes
+  colis         Colis[]        @relation("GroupageColis") // Nouvelle relation vers Colis
+
+  notes Note[] // Relation avec les notes
 }
 
 model MasterPack {
@@ -48,16 +50,19 @@ model MasterPack {
 }
 
 model Colis {
-  id               Int             @id @default(autoincrement())
-  code             String?         @unique
-  nom_complet      String
-  status           Status          @default(RECEIVED)
-  poids            Int?
-  telephone        String
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
-  masterPackId     Int?
-  masterPack       MasterPack?     @relation("MasterPackColis", fields: [masterPackId], references: [id])
+  id           Int         @id @default(autoincrement())
+  code         String?     @unique
+  nom_complet  String
+  status       Status      @default(RECEIVED)
+  poids        Int?
+  telephone    String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  masterPackId Int?
+  masterPack   MasterPack? @relation("MasterPackColis", fields: [masterPackId], references: [id])
+  groupageId   Int? // Ajout du champ groupageId
+  groupage     Groupage?   @relation("GroupageColis", fields: [groupageId], references: [id]) // Ajout de la relation directe
+
   transportType    TransportType? // Le client choisit Aérien ou Maritime
   airType          AirTransport? // Si le client choisit Aérien, il choisit Regulier ou Express
   clientAvecCodeId Int? // Lien avec le ClientAvecCode

@@ -132,13 +132,21 @@ const addParcelInGroupage = async (req, res) => {
         },
       });
     }
+    console.log(colisData);
 
     // Ajouter le colis à ce master pack
-    const colis = await prisma.colis.create({
+    const colis = await prisma.colis.update({
+      where: { id: colisData.id },
       data: {
-        ...colisData,
+        nom_complet: colisData.nom_complet || "Nom par défaut", // Exemple de valeur par défaut
+        telephone: colisData.telephone || "0000000000", // Exemple de valeur par défaut
         masterPack: { connect: { id: dernierMasterPack.id } }, // Associer au master pack
-        // groupage: { connect: { id: groupage.id } }, // Optionnel, au cas où tu souhaites lier directement aussi au groupage
+        groupage: { connect: { id: groupage.id } }, // Associer au groupage
+        code: colisData.code || null, // Nullable
+        status: colisData.status || "RECEIVED", // Status par défaut ou valeur fournie
+        poids: colisData.poids || null, // Nullable
+        transportType: colisData.transportType || null, // Nullable
+        airType: colisData.airType || null, // Nullable
       },
     });
 
