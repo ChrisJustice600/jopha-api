@@ -19,6 +19,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   notes     Note[] // Relation avec les notes créées par l'utilisateur
+
+  @@index([email])
 }
 
 enum Role {
@@ -38,6 +40,12 @@ model Groupage {
   colis         Colis[]        @relation("GroupageColis") // Nouvelle relation vers Colis
 
   notes Note[] // Relation avec les notes
+
+  @@index([code])
+  @@index([status])
+  @@index([transportType])
+  @@index([airType])
+  @@index([createdAt])
 }
 
 model MasterPack {
@@ -69,6 +77,13 @@ model Colis {
   clientAvecCode   ClientAvecCode? @relation(fields: [clientAvecCodeId], references: [id])
 
   notes Note[] // Relation avec les notes
+
+  @@index([nom_complet])
+  @@index([status])
+  @@index([transportType])
+  @@index([airType])
+  @@index([createdAt])
+  @@index([updatedAt])
 }
 
 model ClientAvecCode {
@@ -78,6 +93,8 @@ model ClientAvecCode {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
   colis     Colis[] // Relation avec les colis envoyés par ce client avec code
+
+  @@index([createdAt])
 }
 
 model Note {
