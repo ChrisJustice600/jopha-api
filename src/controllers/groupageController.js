@@ -14,4 +14,31 @@ const createGroupage = async (req, res) => {
   }
 };
 
-module.exports = { createGroupage };
+const getAllGroupagesWithDetails = async (req, res) => {
+  const { status } = req.query;
+
+  try {
+    const groupages = await prisma.groupage.findMany({
+      where: {
+        status: status || undefined,
+      },
+      orderBy: {
+        updatedAt: "desc",
+      },
+      include: {
+        masterPacks: {
+          include: {
+            colis: true,
+          },
+        },
+      },
+    });
+    res.status(200).json(groupages);
+  } catch (error) {
+    res
+      .status(400)
+      .json({ error: "Erreur lors de la récupération des groupages." });
+  }
+};
+
+module.exports = { createGroupage, getAllGroupagesWithDetails };

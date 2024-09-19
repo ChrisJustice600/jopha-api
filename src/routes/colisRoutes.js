@@ -7,12 +7,12 @@ const {
 
 const authRouter = Router();
 
-authRouter.use(checkUserAuthenticated);
+// authRouter.use(checkUserAuthenticated);
 
-const adminOnly = checkUserRole(["ADMIN"]);
-const userAndAdmin = checkUserRole(["USER", "ADMIN"]);
+const adminOnly = checkUserRole(["ADMIN"]); // ça marche
+const userAndAdmin = checkUserRole(["USER", "ADMIN"]); // ça marche
 
-authRouter.post("/register", adminOnly, colisController.createColis);
+authRouter.post("/register", userAndAdmin, colisController.createColis);
 authRouter.put("/update/:id", userAndAdmin, colisController.updateColis);
 authRouter.delete("/delete/:id", adminOnly, colisController.deleteColis);
 authRouter.post("/addParcelInGroupage/", colisController.addParcelInGroupage);
