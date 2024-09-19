@@ -1,18 +1,36 @@
 const { verifyToken } = require("../../config/jwtconfig");
 
-checkUserAuthenticated = (req, res, next) => {
+const checkUserAuthenticated = (req, res, next) => {
   const { token } = req.cookies;
-  console.log(token);
 
-  const isTokenValide = verifyToken(token);
+  if (!token) {
+    return res.status(401).json({ error: "Authentification requise" });
+  }
 
-  console.log(isTokenValide);
-
-  if (isTokenValide) {
-    return next();
-  } else {
-    res.status(401).json({ err: "Authentification refusé" });
+  try {
+    const decodedToken = verifyToken(token);
+    if (!decodedToken) {
+      return res.status(401).json({ error: "Token invalide" });
+    }
+    req.user = decodedToken; // Le token décodé contient les informations de l'utilisateur
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: "Erreur d'authentification" });
   }
 };
 
-module.exports = checkUserAuthenticated;
+const checkUserRole = (allowedRoles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Utilisateur non authentifié" });
+    }
+
+    if (allowedRoles.includes(req.user.role)) {
+      next();
+    } else {
+      res.status(403).json({ error: "Accès non autorisé" });
+    }
+  };
+};
+
+module.exports = { checkUserAuthenticated, checkUserRole };

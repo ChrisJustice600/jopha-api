@@ -1,13 +1,20 @@
 const { Router } = require("express");
 const colisController = require("../../src/controllers/colisController");
-const checkUserAuthenticated = require("../../src/middleware/authMiddleware");
+const {
+  checkUserAuthenticated,
+  checkUserRole,
+} = require("../../src/middleware/authMiddleware");
 
 const authRouter = Router();
+
 authRouter.use(checkUserAuthenticated);
 
-authRouter.post("/register", colisController.createColis);
-authRouter.put("/update/:id", colisController.updateColis);
-authRouter.delete("/delete/:id", colisController.deleteColis);
+const adminOnly = checkUserRole(["ADMIN"]);
+const userAndAdmin = checkUserRole(["USER", "ADMIN"]);
+
+authRouter.post("/register", adminOnly, colisController.createColis);
+authRouter.put("/update/:id", userAndAdmin, colisController.updateColis);
+authRouter.delete("/delete/:id", adminOnly, colisController.deleteColis);
 authRouter.post("/addParcelInGroupage/", colisController.addParcelInGroupage);
 
 // GET PARCEL/COLIS BY GROUPAGE
