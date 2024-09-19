@@ -240,6 +240,55 @@ const getMasterPacksByGroupage = async (req, res) => {
   }
 };
 
+const getFilteredColis = async (req, res) => {
+  const { nom_complet, code, telephone, date, startDate, endDate } = req.query;
+
+  try {
+    let whereClause = {
+      status: "RECEIVED",
+    };
+
+    if (nom_complet) {
+      whereClause.nom_complet = { contains: nom_complet, mode: "insensitive" };
+    }
+
+    if (code) {
+      whereClause.code = code;
+    }
+
+    if (telephone) {
+      whereClause.telephone = telephone;
+    }
+
+    if (date) {
+      const parsedDate = new Date(date);
+      whereClause.createdAt = {
+        gte: parsedDate,
+        lt: new Date(parsedDate.getTime() + 24 * 60 * 60 * 1000),
+      };
+    }
+
+    if (startDate && endDate) {
+      whereClause.createdAt = {
+        gte: new Date(startDate),
+        lte: new Date(endDate),
+      };
+    }
+
+    const colis = await prisma.colis.findMany({
+      where: whereClause,
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    res.status(200).json(colis);
+  } catch (error) {
+    console.error("Erreur lors de la récupération des colis filtrés :", error);
+    res.status(500).json({ error: "Erreur interne du serveur" });
+  }
+};
+
 module.exports = {
   createColis,
   updateColis,
@@ -248,4 +297,5 @@ module.exports = {
   getParcelByGroupage,
   getColisByMasterPack,
   getMasterPacksByGroupage,
+  getFilteredColis,
 };

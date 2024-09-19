@@ -25,4 +25,6 @@ authRouter.post(
   colisController.getMasterPacksByGroupage
 );
 
+authRouter.get("/filtered", colisController.getFilteredColis);
+
 module.exports = authRouter;
