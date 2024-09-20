@@ -1,7 +1,7 @@
 const { Router } = require("express");
 const {
   createGroupage,
-  getAllGroupages,
+  getAllGroupagesWithDetails,
 } = require("../../src/controllers/groupageController");
 const {
   checkUserAuthenticated,
@@ -12,6 +12,6 @@ const authRouter = Router();
 authRouter.use(checkUserAuthenticated);
 
 authRouter.post("/create", createGroupage);
-authRouter.get("/all", getAllGroupages); // Nouvelle route pour récupérer tous les groupages
+authRouter.get("/all", getAllGroupagesWithDetails); // Nouvelle route pour récupérer tous les groupages
 
 module.exports = authRouter;

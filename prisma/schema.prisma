@@ -38,8 +38,7 @@ model Groupage {
   updatedAt     DateTime       @updatedAt
   masterPacks   MasterPack[]   @relation("GroupageMasterPacks")
   colis         Colis[]        @relation("GroupageColis") // Nouvelle relation vers Colis
-
-  notes Note[] // Relation avec les notes
+  notes         Note[]
 
   @@index([code])
   @@index([status])
@@ -49,12 +48,38 @@ model Groupage {
 }
 
 model MasterPack {
-  id         Int      @id @default(autoincrement())
-  numero     String?
-  poids      Int?
-  groupageId Int
-  groupage   Groupage @relation("GroupageMasterPacks", fields: [groupageId], references: [id])
-  colis      Colis[]  @relation("MasterPackColis")
+  id                     Int              @id @default(autoincrement())
+  numero                 String
+  poids                  Int?
+  groupageId             Int
+  groupage               Groupage         @relation("GroupageMasterPacks", fields: [groupageId], references: [id])
+  colis                  Colis[]          @relation("MasterPackColis")
+  isColisMasterPack      Boolean          @default(false)
+  colisMasterPackDetails ColisMasterPack?
+
+  @@index([numero])
+  @@index([isColisMasterPack])
+}
+
+model ColisMasterPack {
+  id               Int             @id @default(autoincrement())
+  masterPackId     Int             @unique
+  masterPack       MasterPack      @relation(fields: [masterPackId], references: [id])
+  code             String          @unique
+  nom_complet      String
+  status           Status          @default(RECEIVED)
+  telephone        String
+  transportType    TransportType?
+  airType          AirTransport?
+  clientAvecCodeId Int?
+  clientAvecCode   ClientAvecCode? @relation(fields: [clientAvecCodeId], references: [id])
+  notes            Note[]
+
+  @@index([code])
+  @@index([nom_complet])
+  @@index([status])
+  @@index([transportType])
+  @@index([airType])
 }
 
 model Colis {
@@ -87,12 +112,13 @@ model Colis {
 }
 
 model ClientAvecCode {
-  id        Int      @id @default(autoincrement())
-  code      String   @unique
-  nomAgence String // Nom de la sous-agence ou du client avec ce code
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-  colis     Colis[] // Relation avec les colis envoyés par ce client avec code
+  id               Int               @id @default(autoincrement())
+  code             String            @unique
+  nomAgence        String // Nom de la sous-agence ou du client avec ce code
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @default(now()) @updatedAt
+  colis            Colis[] // Relation avec les colis envoyés par ce client avec code
+  colisMasterPacks ColisMasterPack[] // Add this line
 
   @@index([createdAt])
 }
@@ -110,6 +136,9 @@ model Note {
 
   groupageId Int?
   groupage   Groupage? @relation(fields: [groupageId], references: [id])
+
+  colisMasterPackId Int?
+  colisMasterPack   ColisMasterPack? @relation(fields: [colisMasterPackId], references: [id])
 }
 
 enum Status {
