@@ -2,10 +2,8 @@ const { Router } = require("express");
 const {
   createGroupage,
   getAllGroupagesWithDetails,
-} = require("../../src/controllers/groupageController");
-const {
-  checkUserAuthenticated,
-} = require("../../src/middleware/authMiddleware");
+} = require("../controllers/groupageController");
+const { checkUserAuthenticated } = require("../middleware/authMiddleware");
 
 const authRouter = Router();
 

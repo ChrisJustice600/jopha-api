@@ -301,80 +301,6 @@ const getFilteredColis = async (req, res) => {
   }
 };
 
-const createColisMasterPack = async (req, res) => {
-  try {
-    const {
-      code,
-      nom_complet,
-      telephone,
-      transportType,
-      airType,
-      clientAvecCodeId,
-      groupageId,
-      poids,
-    } = req.body;
-
-    // Vérifier si le groupage existe et s'il a déjà un MasterPack
-    const existingGroupage = await prisma.groupage.findUnique({
-      where: { id: groupageId },
-      include: { masterPacks: true },
-    });
-
-    if (existingGroupage.masterPacks.length > 0) {
-      return res
-        .status(400)
-        .json({ error: "Ce groupage a déjà un MasterPack" });
-    }
-
-    // Vérifier si le numéro de MasterPack (code) est déjà utilisé
-    const existingMasterPack = await prisma.masterPack.findFirst({
-      where: { numero: code },
-    });
-
-    if (existingMasterPack) {
-      return res
-        .status(400)
-        .json({ error: "Ce numéro de MasterPack est déjà utilisé" });
-    }
-
-    // Créer un nouveau MasterPack
-    const newMasterPack = await prisma.masterPack.create({
-      data: {
-        numero: code,
-        poids,
-        isColisMasterPack: true,
-        groupage: { connect: { id: groupageId } },
-      },
-    });
-
-    // Créer le ColisMasterPack associé
-    const newColisMasterPack = await prisma.colisMasterPack.create({
-      data: {
-        code,
-        nom_complet,
-        telephone,
-        transportType,
-        airType,
-        clientAvecCode: clientAvecCodeId
-          ? { connect: { id: clientAvecCodeId } }
-          : undefined,
-        masterPack: { connect: { id: newMasterPack.id } },
-      },
-    });
-
-    res.status(201).json({
-      message: "ColisMasterPack créé avec succès",
-      colisMasterPack: newColisMasterPack,
-      masterPack: newMasterPack,
-    });
-  } catch (error) {
-    console.error("Erreur lors de la création du ColisMasterPack:", error);
-    res
-      .status(500)
-      .json({ error: "Erreur lors de la création du ColisMasterPack" });
-  }
-};
-
 module.exports = {
   createColis,
   updateColis,
@@ -384,5 +310,4 @@ module.exports = {
   getColisByMasterPack,
   getMasterPacksByGroupage,
   getFilteredColis,
-  createColisMasterPack,
 };
