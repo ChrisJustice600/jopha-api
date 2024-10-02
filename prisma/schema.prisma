@@ -13,6 +13,7 @@ generator client {
 
 model User {
   id        Int      @id @default(autoincrement())
+  username  String
   email     String   @unique
   password  String
   role      Role     @default(USER)
@@ -59,20 +60,19 @@ model MasterPack {
 }
 
 model Colis {
-  id            Int         @id @default(autoincrement())
-  code          String?     @unique
-  nom_complet   String
-  status        Status      @default(RECEIVED)
-  tracking_code String
-  poids         Int?
-  telephone     String
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  masterPackId  Int?
-  masterPack    MasterPack? @relation("MasterPackColis", fields: [masterPackId], references: [id])
-  groupageId    Int? // Ajout du champ groupageId
-  groupage      Groupage?   @relation("GroupageColis", fields: [groupageId], references: [id]) // Ajout de la relation directe
-
+  id               Int             @id @default(autoincrement())
+  code             String?         @unique
+  nom_complet      String
+  status           Status          @default(RECEIVED)
+  tracking_code    String
+  poids            Int?
+  telephone        String
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  masterPackId     Int?
+  masterPack       MasterPack?     @relation("MasterPackColis", fields: [masterPackId], references: [id])
+  groupageId       Int? // Ajout du champ groupageId
+  groupage         Groupage?       @relation("GroupageColis", fields: [groupageId], references: [id]) // Ajout de la relation directe
   transportType    TransportType? // Le client choisit Aérien ou Maritime
   airType          AirTransport? // Si le client choisit Aérien, il choisit Regulier ou Express
   clientAvecCodeId Int? // Lien avec le ClientAvecCode

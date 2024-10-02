@@ -9,14 +9,17 @@ async function main() {
   const emails = new Set();
   for (let i = 0; i < 2; i++) {
     let email;
+    let username;
     do {
       email = faker.internet.email();
+      username = faker.internet.userName();
     } while (emails.has(email));
     emails.add(email);
 
     users.push({
       email,
       password: faker.internet.password(),
+      username,
       role: faker.helpers.arrayElement(["USER", "ADMIN"]),
     });
   }
@@ -25,9 +28,9 @@ async function main() {
     data: users,
   });
 
-  // Générer 2000 groupages
+  // Générer 20 groupages
   const groupages = [];
-  for (let i = 0; i < 2000; i++) {
+  for (let i = 0; i < 20; i++) {
     groupages.push({
       code: faker.string.alphanumeric(10),
       status: faker.helpers.arrayElement([
@@ -46,9 +49,9 @@ async function main() {
     data: groupages,
   });
 
-  // Générer 2000 clients avec code
+  // Générer 7 clients avec code
   const clientsAvecCode = [];
-  for (let i = 0; i < 2000; i++) {
+  for (let i = 0; i < 7; i++) {
     clientsAvecCode.push({
       code: faker.string.alphanumeric(10),
       nomAgence: faker.company.name(),
@@ -59,14 +62,18 @@ async function main() {
     data: clientsAvecCode,
   });
 
-  // Générer 2000 master packs
+  // Récupérer tous les IDs des groupages créés
+  const allGroupageIds = await prisma.groupage.findMany({
+    select: { id: true },
+  });
+
+  // Générer 200 master packs
   const masterPacks = [];
-  for (let i = 0; i < 2000; i++) {
+  for (let i = 0; i < 200; i++) {
     masterPacks.push({
       numero: faker.string.alphanumeric(10),
       poids: faker.number.int({ min: 1, max: 100 }),
-      groupageId: faker.number.int({ min: 1, max: 2000 }), // Assurez-vous que les IDs de groupage existent
-      isColisMasterPack: true, // Tous les MasterPacks seront des ColisMasterPacks
+      groupageId: faker.helpers.arrayElement(allGroupageIds).id, // Assurez-vous que les IDs de groupage existent
     });
   }
 
@@ -77,37 +84,7 @@ async function main() {
   // Récupérer tous les IDs des MasterPacks créés
   const allMasterPackIds = await prisma.masterPack.findMany({
     select: { id: true },
-    where: { isColisMasterPack: true },
   });
-
-  // Générer 2000 colis master packs
-  const colisMasterPacks = [];
-  for (let i = 0; i < allMasterPackIds.length; i++) {
-    colisMasterPacks.push({
-      code: faker.string.alphanumeric(10),
-      nom_complet: faker.person.fullName(),
-      status: faker.helpers.arrayElement([
-        "RECEIVED",
-        "GROUPED",
-        "IN_TRANSIT",
-        "ARRIVED",
-        "DELIVERED",
-      ]),
-      telephone: faker.phone.number(),
-      transportType: faker.helpers.arrayElement(["AERIEN", "MARITIME"]),
-      airType: faker.helpers.arrayElement(["REGULIER", "EXPRESS"]),
-      clientAvecCodeId: faker.number.int({ min: 1, max: 2000 }),
-      masterPackId: allMasterPackIds[i].id, // Utilisez .id pour obtenir l'entier
-    });
-  }
-
-  // Insérer les ColisMasterPacks par lots pour éviter les problèmes de taille de requête
-  for (let i = 0; i < colisMasterPacks.length; i += 100) {
-    const batch = colisMasterPacks.slice(i, i + 100);
-    await prisma.colisMasterPack.createMany({
-      data: batch,
-    });
-  }
 
   // Générer 2000 colis
   const colis = [];
@@ -125,11 +102,11 @@ async function main() {
       tracking_code: faker.string.alphanumeric(10),
       poids: faker.number.int({ min: 1, max: 100 }),
       telephone: faker.phone.number(),
-      groupageId: faker.number.int({ min: 1, max: 2000 }), // Assurez-vous que les IDs de groupage existent
-      masterPackId: faker.number.int({ min: 1, max: 2000 }), // Assurez-vous que les IDs de masterPack existent
+      groupageId: faker.helpers.arrayElement(allGroupageIds).id, // Assurez-vous que les IDs de groupage existent
+      masterPackId: faker.helpers.arrayElement(allMasterPackIds).id, // Assurez-vous que les IDs de masterPack existent
       transportType: faker.helpers.arrayElement(["AERIEN", "MARITIME"]),
       airType: faker.helpers.arrayElement(["REGULIER", "EXPRESS"]),
-      clientAvecCodeId: faker.number.int({ min: 1, max: 2000 }), // Assurez-vous que les IDs de clientAvecCode existent
+      clientAvecCodeId: faker.number.int({ min: 1, max: 7 }), // Assurez-vous que les IDs de clientAvecCode existent
     });
   }
 
@@ -137,14 +114,13 @@ async function main() {
     data: colis,
   });
 
-  // Générer 2000 notes
+  // Générer 200 notes
   const notes = [];
   const userCount = await prisma.user.count();
   const colisCount = await prisma.colis.count();
   const groupageCount = await prisma.groupage.count();
-  const colisMasterPackCount = await prisma.colisMasterPack.count();
 
-  for (let i = 0; i < 2000; i++) {
+  for (let i = 0; i < 200; i++) {
     notes.push({
       contenu: faker.lorem.sentence(),
       userId: faker.number.int({ min: 1, max: userCount }),
@@ -153,9 +129,6 @@ async function main() {
         : null,
       groupageId: faker.datatype.boolean()
         ? faker.number.int({ min: 1, max: groupageCount })
-        : null,
-      colisMasterPackId: faker.datatype.boolean()
-        ? faker.number.int({ min: 1, max: colisMasterPackCount })
         : null,
     });
   }
