@@ -6,7 +6,7 @@ const config = require("../../config/environment");
 
 const register = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, username } = req.body;
 
     // Regex pour valider le format de l'email
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -37,6 +37,7 @@ const register = async (req, res) => {
       data: {
         email,
         password: passwordHash,
+        username,
         role: "USER",
       },
     });

@@ -4,15 +4,19 @@ const createColis = async (req, res) => {
   const {
     code, // code du colis
     nom_complet,
+    tracking_code,
     poids,
     telephone,
     transportType,
     airType,
-    clientAvecCode, // code du client avec code
+    clientAvecCode,
   } = req.body;
+  console.log(nom_complet);
+  console.log(clientAvecCode);
+  console.log(transportType);
 
   try {
-    // // Validation de base des champs requis
+    // Validation de base des champs requis
     // if (!nom_complet || !telephone || !transportType || !clientAvecCode) {
     //   return res.status(400).json({
     //     error:
@@ -20,34 +24,45 @@ const createColis = async (req, res) => {
     //   });
     // }
 
-    // // Si le type de transport est Aérien, airType est également obligatoire
-    // if (transportType === "AERIEN" && !airType) {
-    //   return res.status(400).json({
-    //     error: "Le champ airType est obligatoire pour le transport aérien.",
-    //   });
-    // }
-
-    // Vérifier si le client avec code existe
-    // const client = await prisma.clientAvecCode.findUnique({
-    //   where: { code: clientAvecCode },
-    // });
+    // Si le type de transport est Aérien, airType est également obligatoire
+    if (transportType === "AERIEN" && !airType) {
+      return res.status(400).json({
+        error: "Le champ airType est obligatoire pour le transport aérien.",
+      });
+    }
 
     // if (!client) {
     //   return res.status(404).json({ error: "Client avec code non trouvé." });
     // }
+    let clientId = null;
+
+    // Si un clientAvecCode est fourni, essayer de récupérer le client
+    if (clientAvecCode) {
+      const client = await prisma.clientAvecCode.findUnique({
+        where: { code: clientAvecCode },
+      });
+
+      if (!client) {
+        return res.status(404).json({ error: "Client avec code non trouvé." });
+      }
+
+      clientId = client.id;
+    }
 
     // Création du colis dans la base de données avec association au client
     const colis = await prisma.colis.create({
       data: {
-        // code,
+        code,
         nom_complet,
-        // poids: poids ? parseInt(poids) : null, // Si le poids est fourni, le transformer en entier
+        tracking_code,
+        poids: poids ? parseInt(poids) : null, // Si le poids est fourni, le transformer en entier
         telephone,
-        // transportType,
-        // airType,
-        // clientAvecCodeId: client.id, // Associer le colis au client avec code
+        transportType,
+        airType,
+        clientAvecCodeId: clientId, // Associer le colis au client avec code
       },
     });
+    4;
 
     res.status(201).json({ message: "Colis créé avec succès", colis });
   } catch (error) {
@@ -143,7 +158,7 @@ const addParcelInGroupage = async (req, res) => {
         masterPack: { connect: { id: dernierMasterPack.id } }, // Associer au master pack
         groupage: { connect: { id: groupage.id } }, // Associer au groupage
         code: colisData.code || null, // Nullable
-        status: colisData.status || "RECEIVED", // Status par défaut ou valeur fournie
+        status: "GROUPED", // Status par défaut ou valeur fournie
         poids: colisData.poids || null, // Nullable
         transportType: colisData.transportType || null, // Nullable
         airType: colisData.airType || null, // Nullable

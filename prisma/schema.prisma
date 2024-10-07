@@ -91,7 +91,6 @@ model Colis {
 model ClientAvecCode {
   id        Int      @id @default(autoincrement())
   code      String   @unique
-  nomAgence String // Nom de la sous-agence ou du client avec ce code
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
   colis     Colis[] // Relation avec les colis envoyés par ce client avec code

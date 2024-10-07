@@ -54,7 +54,6 @@ async function main() {
   for (let i = 0; i < 7; i++) {
     clientsAvecCode.push({
       code: faker.string.alphanumeric(10),
-      nomAgence: faker.company.name(),
     });
   }
 

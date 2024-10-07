@@ -12,7 +12,7 @@ const authRouter = Router();
 const adminOnly = checkUserRole(["ADMIN"]); // ça marche
 const userAndAdmin = checkUserRole(["USER", "ADMIN"]); // ça marche
 
-authRouter.post("/register", userAndAdmin, colisController.createColis);
+authRouter.post("/register", colisController.createColis);
 // authRouter.post(
 //   "/registercolisMasterPack",
 //   userAndAdmin,
