@@ -40,8 +40,4 @@ app.use(limiter);
 
 app.use("/", routes);
 
-app.get("/", (req, res) => {
-  res.send("<h1>Bienvenue au serveur C3</h1>");
-});
-
 app.listen(config.PORT, () => console.log(`server started on ${config.PORT}`));
