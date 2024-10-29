@@ -19,7 +19,7 @@ authRouter.post("/register", colisController.createColis);
 //   colisController.createColisMasterPack
 // );
 authRouter.put("/update/:id", userAndAdmin, colisController.updateColis);
-authRouter.delete("/delete/:id", adminOnly, colisController.deleteColis);
+authRouter.delete("/delete/:id", colisController.deleteColis);
 authRouter.post("/addParcelInGroupage/", colisController.addParcelInGroupage);
 
 // GET PARCEL/COLIS BY GROUPAGE
