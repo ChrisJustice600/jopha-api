@@ -1,3 +1,4 @@
+const { Status } = require("@prisma/client");
 const { prisma, updateRecord } = require("../../database/prisma");
 
 const createColis = async (req, res) => {
@@ -73,8 +74,9 @@ const createColis = async (req, res) => {
 
 const updateColis = async (req, res) => {
   const { id } = req.params;
+  console.log(id);
 
-  const { nom_complet } = req.body;
+  const data = req.body;
   try {
     // Vérification de l'existence du colis
     const colis = await prisma.colis.findUnique({
@@ -86,7 +88,15 @@ const updateColis = async (req, res) => {
     }
 
     // Appel à la fonction réutilisable pour mettre à jour le colis
-    const colisRecord = await updateRecord(id, { nom_complet });
+    const colisRecord = await updateRecord(id, {
+      nom_complet: data.nom_complet,
+      tracking_code: data.tracking_code,
+      poids: data.poids,
+      telephone: data.telephone,
+      transportType: data.transportType,
+      airType: data.airType,
+      Status: data.status,
+    });
     res
       .status(200)
       .json({ message: "Colis a été modifié avec succès", colisRecord });
@@ -316,6 +326,55 @@ const getFilteredColis = async (req, res) => {
   }
 };
 
+// ... existing code ...
+
+const getParcelById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Vérification que l'ID est fourni
+    if (!id) {
+      return res.status(400).json({ error: "L'ID du colis est requis" });
+    }
+
+    // Vérification de l'existence de l'ID dans la base de données
+    const parcelExists = await prisma.colis.findUnique({
+      where: { id: parseInt(id) },
+      select: { id: true }, // Récupère uniquement l'ID pour vérifier l'existence
+    });
+
+    if (!parcelExists) {
+      return res.status(404).json({ error: "Colis non trouvé" });
+    }
+
+    // Récupération du colis avec toutes les relations associées
+    const parcel = await prisma.colis.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        masterPack: true, // Inclut les informations du masterPack
+        groupage: {
+          // Inclut les informations du groupage
+          include: {
+            masterPacks: true, // Inclut les masterPacks associés au groupage
+            notes: true, // Inclut les notes associées au groupage
+          },
+        },
+        clientAvecCode: true, // Inclut les informations du clientAvecCode
+        notes: true, // Inclut les notes asso ciées au colis
+      },
+    });
+
+    // Vérification si le colis existe
+    if (!parcel) {
+      return res.status(404).json({ error: "Colis non trouvé" });
+    }
+
+    res.status(200).json({ parcel });
+  } catch (error) {
+    console.error("Erreur lors de la récupération du colis:", error);
+    res.status(500).json({ error: "Erreur interne du serveur" });
+  }
+};
 module.exports = {
   createColis,
   updateColis,
@@ -325,4 +384,5 @@ module.exports = {
   getColisByMasterPack,
   getMasterPacksByGroupage,
   getFilteredColis,
+  getParcelById,
 };

@@ -13,12 +13,13 @@ const adminOnly = checkUserRole(["ADMIN"]); // ça marche
 const userAndAdmin = checkUserRole(["USER", "ADMIN"]); // ça marche
 
 authRouter.post("/register", colisController.createColis);
+authRouter.get("/getParcelById/:id", colisController.getParcelById);
 // authRouter.post(
 //   "/registercolisMasterPack",
 //   userAndAdmin,
 //   colisController.createColisMasterPack
 // );
-authRouter.put("/update/:id", userAndAdmin, colisController.updateColis);
+authRouter.put("/update/:id", colisController.updateColis);
 authRouter.delete("/delete/:id", colisController.deleteColis);
 authRouter.post("/addParcelInGroupage/", colisController.addParcelInGroupage);
 
