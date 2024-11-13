@@ -10,6 +10,9 @@ CREATE TYPE "TransportType" AS ENUM ('AERIEN', 'MARITIME');
 -- CreateEnum
 CREATE TYPE "AirTransport" AS ENUM ('REGULIER', 'EXPRESS');
 
+-- CreateEnum
+CREATE TYPE "ItemType" AS ENUM ('ORDINAIRE', 'ELECTRONIQUE', 'COSMETIQUE', 'PHARMACEUTIQUE', 'BIJOUX', 'CABELLO', 'TELEPHONE');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
@@ -53,7 +56,7 @@ CREATE TABLE "Colis" (
     "nom_complet" TEXT NOT NULL,
     "status" "Status" NOT NULL DEFAULT 'RECEIVED',
     "tracking_code" TEXT NOT NULL,
-    "poids" INTEGER,
+    "poids" TEXT,
     "telephone" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -61,6 +64,7 @@ CREATE TABLE "Colis" (
     "groupageId" INTEGER,
     "transportType" "TransportType",
     "airType" "AirTransport",
+    "itemType" "ItemType" NOT NULL,
     "clientAvecCodeId" INTEGER,
 
     CONSTRAINT "Colis_pkey" PRIMARY KEY ("id")
@@ -130,6 +134,9 @@ CREATE INDEX "Colis_transportType_idx" ON "Colis"("transportType");
 
 -- CreateIndex
 CREATE INDEX "Colis_airType_idx" ON "Colis"("airType");
+
+-- CreateIndex
+CREATE INDEX "Colis_itemType_idx" ON "Colis"("itemType");
 
 -- CreateIndex
 CREATE INDEX "Colis_createdAt_idx" ON "Colis"("createdAt");

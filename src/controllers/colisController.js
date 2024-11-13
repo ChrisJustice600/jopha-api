@@ -56,7 +56,7 @@ const createColis = async (req, res) => {
         code,
         nom_complet,
         tracking_code,
-        poids: poids ? parseInt(poids) : null, // Si le poids est fourni, le transformer en entier
+        poids, // Si le poids est fourni, le transformer en entier
         telephone,
         transportType,
         airType,

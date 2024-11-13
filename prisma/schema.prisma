@@ -1,5 +1,3 @@
-// prisma/schema.prisma
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -34,11 +32,11 @@ model Groupage {
   code          String         @unique
   status        Status         @default(GROUPED)
   transportType TransportType? // Aérien ou Maritime
-  airType       AirTransport? // Regulier ou Express (uniquement si transportType est Aérien)
+  airType       AirTransport? // Régulier ou Express (uniquement si transportType est Aérien)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   masterPacks   MasterPack[]   @relation("GroupageMasterPacks")
-  colis         Colis[]        @relation("GroupageColis") // Nouvelle relation vers Colis
+  colis         Colis[]        @relation("GroupageColis")
   notes         Note[]
 
   @@index([code])
@@ -65,16 +63,17 @@ model Colis {
   nom_complet      String
   status           Status          @default(RECEIVED)
   tracking_code    String
-  poids            Int?
+  poids            String?
   telephone        String
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
   masterPackId     Int?
   masterPack       MasterPack?     @relation("MasterPackColis", fields: [masterPackId], references: [id])
-  groupageId       Int? // Ajout du champ groupageId
-  groupage         Groupage?       @relation("GroupageColis", fields: [groupageId], references: [id]) // Ajout de la relation directe
+  groupageId       Int?
+  groupage         Groupage?       @relation("GroupageColis", fields: [groupageId], references: [id])
   transportType    TransportType? // Le client choisit Aérien ou Maritime
-  airType          AirTransport? // Si le client choisit Aérien, il choisit Regulier ou Express
+  airType          AirTransport? // Si le client choisit Aérien, il choisit Régulier ou Express
+  itemType         ItemType? // Type d'article pour le calcul des tarifs
   clientAvecCodeId Int? // Lien avec le ClientAvecCode
   clientAvecCode   ClientAvecCode? @relation(fields: [clientAvecCodeId], references: [id])
 
@@ -84,6 +83,7 @@ model Colis {
   @@index([status])
   @@index([transportType])
   @@index([airType])
+  @@index([itemType])
   @@index([createdAt])
   @@index([updatedAt])
 }
@@ -129,4 +129,14 @@ enum TransportType {
 enum AirTransport {
   REGULIER
   EXPRESS
+}
+
+enum ItemType {
+  ORDINAIRE
+  ELECTRONIQUE
+  COSMETIQUE
+  PHARMACEUTIQUE
+  BIJOUX
+  CABELLO
+  TELEPHONE
 }
