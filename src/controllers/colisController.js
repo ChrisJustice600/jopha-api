@@ -11,6 +11,7 @@ const createColis = async (req, res) => {
     transportType,
     airType,
     clientAvecCode,
+    itemType,
   } = req.body;
   console.log(nom_complet);
   console.log(clientAvecCode);
@@ -61,6 +62,7 @@ const createColis = async (req, res) => {
         transportType,
         airType,
         clientAvecCodeId: clientId, // Associer le colis au client avec code
+        itemType,
       },
     });
     4;
