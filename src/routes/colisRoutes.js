@@ -1,7 +1,7 @@
 const { Router } = require("express");
 const colisController = require("../controllers/colisController");
 const {
-  // checkUserAuthenticated,
+  //checkUserAuthenticated,
   checkUserRole,
 } = require("../middleware/authMiddleware");
 

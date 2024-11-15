@@ -77,4 +77,3 @@ async function signin(req, res) {
   }
 }
 module.exports = { register, signin };
-
