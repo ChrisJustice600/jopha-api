@@ -50,6 +50,7 @@ const createColis = async (req, res) => {
 
       clientId = client.id;
     }
+    const poidsString = poids ? String(poids) : null;
 
     // Création du colis dans la base de données avec association au client
     const colis = await prisma.colis.create({
@@ -57,7 +58,7 @@ const createColis = async (req, res) => {
         code,
         nom_complet,
         tracking_code,
-        poids, // Si le poids est fourni, le transformer en entier
+        poids: poidsString, // Si le poids est fourni, le transformer en entier
         telephone,
         transportType,
         airType,

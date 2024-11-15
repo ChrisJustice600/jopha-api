@@ -64,7 +64,7 @@ CREATE TABLE "Colis" (
     "groupageId" INTEGER,
     "transportType" "TransportType",
     "airType" "AirTransport",
-    "itemType" "ItemType" NOT NULL,
+    "itemType" "ItemType",
     "clientAvecCodeId" INTEGER,
 
     CONSTRAINT "Colis_pkey" PRIMARY KEY ("id")
