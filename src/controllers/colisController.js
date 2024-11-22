@@ -3,7 +3,7 @@ const { prisma, updateRecord } = require("../../database/prisma");
 
 const createColis = async (req, res) => {
   const {
-    code, // code du colis
+    code,
     nom_complet,
     tracking_code,
     poids,
@@ -13,32 +13,17 @@ const createColis = async (req, res) => {
     clientAvecCode,
     itemType,
   } = req.body;
-  console.log(nom_complet);
-  console.log(clientAvecCode);
-  console.log(transportType);
 
   try {
     // Validation de base des champs requis
-    // if (!nom_complet || !telephone || !transportType || !clientAvecCode) {
-    //   return res.status(400).json({
-    //     error:
-    //       "Les champs nom_complet, telephone, transportType et clientAvecCode sont obligatoires.",
-    //   });
-    // }
-
-    // Si le type de transport est Aérien, airType est également obligatoire
-    if (transportType === "AERIEN" && !airType) {
+    if (!nom_complet || !telephone || !tracking_code) {
       return res.status(400).json({
-        error: "Le champ airType est obligatoire pour le transport aérien.",
+        error:
+          "Les champs nom_complet, telephone et tracking_code sont obligatoires.",
       });
     }
 
-    // if (!client) {
-    //   return res.status(404).json({ error: "Client avec code non trouvé." });
-    // }
     let clientId = null;
-
-    // Si un clientAvecCode est fourni, essayer de récupérer le client
     if (clientAvecCode) {
       const client = await prisma.clientAvecCode.findUnique({
         where: { code: clientAvecCode },
@@ -47,31 +32,39 @@ const createColis = async (req, res) => {
       if (!client) {
         return res.status(404).json({ error: "Client avec code non trouvé." });
       }
-
       clientId = client.id;
     }
-    const poidsString = poids ? String(poids) : null;
 
-    // Création du colis dans la base de données avec association au client
+    // Création du colis dans la base de données
     const colis = await prisma.colis.create({
       data: {
-        code,
+        code: code || undefined,
         nom_complet,
         tracking_code,
-        poids: poidsString, // Si le poids est fourni, le transformer en entier
+        poids: poids ? String(poids) : null,
         telephone,
-        transportType,
-        airType,
-        clientAvecCodeId: clientId, // Associer le colis au client avec code
-        itemType,
+        transportType: transportType || undefined,
+        airType: airType || undefined,
+        clientAvecCodeId: clientId,
+        itemType: itemType || undefined,
+        status: "RECEIVED", // Ajout du status par défaut
       },
     });
-    4;
 
-    res.status(201).json({ message: "Colis créé avec succès", colis });
+    // Log pour debug
+    console.log("Colis créé avec succès:", colis);
+
+    res.status(201).json({
+      message: "Colis créé avec succès",
+      colis,
+    });
   } catch (error) {
-    console.error("Erreur lors de la création du colis :", error);
-    res.status(500).json({ error: "Erreur interne du serveur" });
+    // Log détaillé de l'erreur
+    console.error("Erreur détaillée lors de la création du colis:", error);
+    res.status(500).json({
+      error: "Erreur lors de la création du colis",
+      details: error.message,
+    });
   }
 };
 

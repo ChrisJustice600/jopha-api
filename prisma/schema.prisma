@@ -77,7 +77,7 @@ model Colis {
   clientAvecCodeId Int? // Lien avec le ClientAvecCode
   clientAvecCode   ClientAvecCode? @relation(fields: [clientAvecCodeId], references: [id])
 
-  notes Note[] // Relation avec les notes
+  notes Note[] // Relation avec les notes hh
 
   @@index([nom_complet])
   @@index([status])
