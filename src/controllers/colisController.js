@@ -41,7 +41,7 @@ const createColis = async (req, res) => {
         code: code || undefined,
         nom_complet,
         tracking_code,
-        poids: poids ? String(poids) : null,
+        poids: "12,4",
         telephone,
         transportType: transportType || undefined,
         airType: airType || undefined,
