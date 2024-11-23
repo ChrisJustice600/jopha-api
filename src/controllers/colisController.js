@@ -65,7 +65,7 @@ const createColis = async (req, res) => {
         code: code?.trim() || null,
         nom_complet: nom_complet.trim(),
         tracking_code: tracking_code.trim(),
-        poids: poids ? parseFloat(poids) : null, // Conversion du poids en Decimal si présent
+        poids: poids || null, // Conversion du poids en Decimal si présent
         telephone: telephone.trim(),
         transportType: transportType || null,
         airType: airType || null,
