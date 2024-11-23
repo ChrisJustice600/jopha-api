@@ -10,59 +10,89 @@ const createColis = async (req, res) => {
     telephone,
     transportType,
     airType,
-    clientAvecCode,
+    // clientAvecCode,
     itemType,
   } = req.body;
 
   try {
-    // Validation de base des champs requis
-    if (!nom_complet || !telephone || !tracking_code) {
-      return res.status(400).json({
-        error:
-          "Les champs nom_complet, telephone et tracking_code sont obligatoires.",
-      });
-    }
+    // **Validation des champs obligatoires avec des messages clairs**
+    // if (!nom_complet || typeof nom_complet !== "string") {
+    //   return res.status(400).json({
+    //     error:
+    //       "Le champ 'nom_complet' est obligatoire et doit être une chaîne de caractères.",
+    //   });
+    // }
 
-    let clientId = null;
-    if (clientAvecCode) {
-      const client = await prisma.clientAvecCode.findUnique({
-        where: { code: clientAvecCode },
-      });
+    // if (!telephone || !/^\+?[0-9]{7,15}$/.test(telephone)) {
+    //   return res.status(400).json({
+    //     error:
+    //       "Le champ 'telephone' est obligatoire et doit être un numéro valide.",
+    //   });
+    // }
 
-      if (!client) {
-        return res.status(404).json({ error: "Client avec code non trouvé." });
-      }
-      clientId = client.id;
-    }
+    // if (!tracking_code || typeof tracking_code !== "string") {
+    //   return res.status(400).json({
+    //     error:
+    //       "Le champ 'tracking_code' est obligatoire et doit être une chaîne de caractères.",
+    //   });
+    // }
 
-    // Création du colis dans la base de données
+    // // Validation du poids (doit être un nombre décimal positif, optionnel)
+    // if (poids && (isNaN(parseFloat(poids)) || parseFloat(poids) <= 0)) {
+    //   return res
+    //     .status(400)
+    //     .json({ error: "Le champ 'poids' doit être un nombre positif." });
+    // }
+
+    // // Vérification si le clientAvecCode est fourni
+    // let clientId = null;
+    // if (clientAvecCode) {
+    //   const client = await prisma.clientAvecCode.findUnique({
+    //     where: { code: clientAvecCode },
+    //   });
+
+    //   if (!client) {
+    //     return res
+    //       .status(404)
+    //       .json({ error: "Client avec le code spécifié non trouvé." });
+    //   }
+    //   clientId = client.id;
+    // }
+
+    // **Création du colis avec validations des champs optionnels**
     const colis = await prisma.colis.create({
       data: {
-        code: code || undefined,
-        nom_complet,
-        tracking_code,
-        // poids: "12,4",
-        telephone,
-        transportType: transportType || undefined,
-        airType: airType || undefined,
-        clientAvecCodeId: clientId,
-        itemType: itemType || undefined,
-        status: "RECEIVED", // Ajout du status par défaut
+        code: code?.trim() || null,
+        nom_complet: nom_complet.trim(),
+        tracking_code: tracking_code.trim(),
+        poids: poids ? parseFloat(poids) : null, // Conversion du poids en Decimal si présent
+        telephone: telephone.trim(),
+        transportType: transportType || null,
+        airType: airType || null,
+        // clientAvecCodeId: clientId,
+        itemType: itemType || null,
+        status: "RECEIVED", // Ajout du statut par défaut
       },
     });
 
-    // Log pour debug
-    console.log("Colis créé avec succès:", colis);
-
+    // Réponse en cas de succès
     res.status(201).json({
       message: "Colis créé avec succès",
       colis,
     });
   } catch (error) {
-    // Log détaillé de l'erreur
-    console.error("Erreur détaillée lors de la création du colis:", error);
+    // **Gestion détaillée des erreurs Prisma et autres**
+    if (error.code === "P2002") {
+      // Erreur d'unicité Prisma
+      return res.status(409).json({
+        error: "Un colis avec le même tracking_code existe déjà.",
+      });
+    }
+
+    // Erreur générale côté serveur
+    console.error("Erreur lors de la création du colis:", error);
     res.status(500).json({
-      error: "Erreur lors de la création du colis",
+      error: "Une erreur est survenue lors de la création du colis.",
       details: error.message,
     });
   }
