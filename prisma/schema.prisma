@@ -1,13 +1,11 @@
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
 generator client {
   provider = "prisma-client-js"
 }
 
-// Modèles
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
 model User {
   id        Int      @id @default(autoincrement())
@@ -17,26 +15,21 @@ model User {
   role      Role     @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  notes     Note[] // Relation avec les notes créées par l'utilisateur
+  notes     Note[]
 
   @@index([email])
-}
-
-enum Role {
-  USER
-  ADMIN
 }
 
 model Groupage {
   id            Int            @id @default(autoincrement())
   code          String         @unique
   status        Status         @default(GROUPED)
-  transportType TransportType? // Aérien ou Maritime
-  airType       AirTransport? // Régulier ou Express (uniquement si transportType est Aérien)
+  transportType TransportType?
+  airType       AirTransport?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
-  masterPacks   MasterPack[]   @relation("GroupageMasterPacks")
   colis         Colis[]        @relation("GroupageColis")
+  masterPacks   MasterPack[]   @relation("GroupageMasterPacks")
   notes         Note[]
 
   @@index([code])
@@ -51,8 +44,8 @@ model MasterPack {
   numero     String?
   poids      Int?
   groupageId Int
-  groupage   Groupage @relation("GroupageMasterPacks", fields: [groupageId], references: [id])
   colis      Colis[]  @relation("MasterPackColis")
+  groupage   Groupage @relation("GroupageMasterPacks", fields: [groupageId], references: [id])
 
   @@index([numero])
 }
@@ -68,22 +61,19 @@ model Colis {
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
   masterPackId     Int?
-  masterPack       MasterPack?     @relation("MasterPackColis", fields: [masterPackId], references: [id])
   groupageId       Int?
-  groupage         Groupage?       @relation("GroupageColis", fields: [groupageId], references: [id])
-  transportType    TransportType? // Le client choisit Aérien ou Maritime
-  airType          AirTransport? // Si le client choisit Aérien, il choisit Régulier ou Express
-  itemType         ItemType? // Type d'article pour le calcul des tarifs
-  clientAvecCodeId Int? // Lien avec le ClientAvecCode
+  transportType    TransportType?
+  airType          AirTransport?
+  clientAvecCodeId Int?
   clientAvecCode   ClientAvecCode? @relation(fields: [clientAvecCodeId], references: [id])
-
-  notes Note[] // Relation avec les notes hh
+  groupage         Groupage?       @relation("GroupageColis", fields: [groupageId], references: [id])
+  masterPack       MasterPack?     @relation("MasterPackColis", fields: [masterPackId], references: [id])
+  notes            Note[]
 
   @@index([nom_complet])
   @@index([status])
   @@index([transportType])
   @@index([airType])
-  @@index([itemType])
   @@index([createdAt])
   @@index([updatedAt])
 }
@@ -93,24 +83,27 @@ model ClientAvecCode {
   code      String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
-  colis     Colis[] // Relation avec les colis envoyés par ce client avec code
+  colis     Colis[]
 
   @@index([createdAt])
 }
 
 model Note {
-  id        Int      @id @default(autoincrement())
-  contenu   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
-
-  colisId Int?
-  colis   Colis? @relation(fields: [colisId], references: [id])
-
+  id         Int       @id @default(autoincrement())
+  contenu    String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  userId     Int
+  colisId    Int?
   groupageId Int?
+  colis      Colis?    @relation(fields: [colisId], references: [id])
   groupage   Groupage? @relation(fields: [groupageId], references: [id])
+  user       User      @relation(fields: [userId], references: [id])
+}
+
+enum Role {
+  USER
+  ADMIN
 }
 
 enum Status {
@@ -129,14 +122,4 @@ enum TransportType {
 enum AirTransport {
   REGULIER
   EXPRESS
-}
-
-enum ItemType {
-  ORDINAIRE
-  ELECTRONIQUE
-  COSMETIQUE
-  PHARMACEUTIQUE
-  BIJOUX
-  CABELLO
-  TELEPHONE
 }
