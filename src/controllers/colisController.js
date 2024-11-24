@@ -11,7 +11,7 @@ const createColis = async (req, res) => {
     transportType,
     airType,
     // clientAvecCode,
-    // itemType,
+    itemType,
   } = req.body;
 
   try {
@@ -26,7 +26,7 @@ const createColis = async (req, res) => {
         transportType: transportType || null,
         airType: airType || null,
         // clientAvecCodeId: clientId,
-        // itemType: itemType || null,
+        itemType: itemType || null,
         status: "RECEIVED", // Ajout du statut par défaut
       },
     });
