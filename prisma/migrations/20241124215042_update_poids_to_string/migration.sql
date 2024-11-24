@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Colis" ALTER COLUMN "poids" SET DATA TYPE TEXT;

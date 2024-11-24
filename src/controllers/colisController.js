@@ -1,6 +1,5 @@
 const { Status } = require("@prisma/client");
 const { prisma, updateRecord } = require("../../database/prisma");
-import { Decimal } from "@prisma/client/runtime"; // Import de Decimal.js
 
 const createColis = async (req, res) => {
   const {
@@ -66,7 +65,7 @@ const createColis = async (req, res) => {
         code: code?.trim() || null,
         nom_complet: nom_complet.trim(),
         tracking_code: tracking_code.trim(),
-        poids: poids ? new Decimal(poids) : null, // Conversion en Decimal
+        poids: poids || null, // Conversion en Decimal
         telephone: telephone.trim(),
         transportType: transportType || null,
         airType: airType || null,
