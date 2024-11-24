@@ -15,50 +15,6 @@ const createColis = async (req, res) => {
   } = req.body;
 
   try {
-    // **Validation des champs obligatoires avec des messages clairs**
-    // if (!nom_complet || typeof nom_complet !== "string") {
-    //   return res.status(400).json({
-    //     error:
-    //       "Le champ 'nom_complet' est obligatoire et doit être une chaîne de caractères.",
-    //   });
-    // }
-
-    // if (!telephone || !/^\+?[0-9]{7,15}$/.test(telephone)) {
-    //   return res.status(400).json({
-    //     error:
-    //       "Le champ 'telephone' est obligatoire et doit être un numéro valide.",
-    //   });
-    // }
-
-    // if (!tracking_code || typeof tracking_code !== "string") {
-    //   return res.status(400).json({
-    //     error:
-    //       "Le champ 'tracking_code' est obligatoire et doit être une chaîne de caractères.",
-    //   });
-    // }
-
-    // // Validation du poids (doit être un nombre décimal positif, optionnel)
-    // if (poids && (isNaN(parseFloat(poids)) || parseFloat(poids) <= 0)) {
-    //   return res
-    //     .status(400)
-    //     .json({ error: "Le champ 'poids' doit être un nombre positif." });
-    // }
-
-    // // Vérification si le clientAvecCode est fourni
-    // let clientId = null;
-    // if (clientAvecCode) {
-    //   const client = await prisma.clientAvecCode.findUnique({
-    //     where: { code: clientAvecCode },
-    //   });
-
-    //   if (!client) {
-    //     return res
-    //       .status(404)
-    //       .json({ error: "Client avec le code spécifié non trouvé." });
-    //   }
-    //   clientId = client.id;
-    // }
-
     // **Création du colis avec validations des champs optionnels**
     const colis = await prisma.colis.create({
       data: {
