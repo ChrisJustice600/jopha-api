@@ -64,6 +64,7 @@ model Colis {
   groupageId       Int?
   transportType    TransportType?
   airType          AirTransport?
+  itemType         ItemType?
   clientAvecCodeId Int?
   clientAvecCode   ClientAvecCode? @relation(fields: [clientAvecCodeId], references: [id])
   groupage         Groupage?       @relation("GroupageColis", fields: [groupageId], references: [id])
@@ -122,4 +123,14 @@ enum TransportType {
 enum AirTransport {
   REGULIER
   EXPRESS
+}
+
+enum ItemType {
+  ORDINAIRE
+  ELECTRONIQUE
+  COSMETIQUE
+  PHARMACEUTIQUE
+  BIJOUX
+  CABELLO
+  TELEPHONE
 }
