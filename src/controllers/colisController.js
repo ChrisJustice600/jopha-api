@@ -73,10 +73,11 @@ const updateColis = async (req, res) => {
     const colisRecord = await updateRecord(id, {
       nom_complet: data.nom_complet,
       tracking_code: data.tracking_code,
-      poids: data.poids,
+      poids_colis: data.poids_colis,
       telephone: data.telephone,
       transportType: data.transportType,
       airType: data.airType,
+      itemType: data.itemTypeType,
       Status: data.status,
     });
     res
