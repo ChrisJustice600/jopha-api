@@ -226,12 +226,12 @@ const getColisByMasterPack = async (req, res) => {
 };
 
 const getMasterPacksByGroupage = async (req, res) => {
-  const { groupageId } = req.params;
+  const { code } = req.params;
 
   try {
     // Récupérer tous les master packs et colisMasterPacks d'un groupage
     const groupage = await prisma.groupage.findUnique({
-      where: { id: parseInt(groupageId) },
+      where: { code },
       include: {
         masterPacks: true,
         colisMasterPacks: true,
