@@ -1,4 +1,3 @@
-const { Status } = require("@prisma/client");
 const { prisma, updateRecord } = require("../../database/prisma");
 
 const createColis = async (req, res) => {
@@ -60,7 +59,6 @@ const updateColis = async (req, res) => {
 
   const data = req.body;
   try {
-    // Vérification de l'existence du colis
     const colis = await prisma.colis.findUnique({
       where: { id: parseInt(id) },
     });
@@ -69,7 +67,6 @@ const updateColis = async (req, res) => {
       return res.status(404).json({ error: "Colis non trouvé" });
     }
 
-    // Appel à la fonction réutilisable pour mettre à jour le colis
     const colisRecord = await updateRecord(id, {
       nom_complet: data.nom_complet,
       tracking_code: data.tracking_code,
@@ -93,7 +90,6 @@ const deleteColis = async (req, res) => {
   const { id } = req.params;
 
   try {
-    // Vérification de l'existence du colis
     const colis = await prisma.colis.findUnique({
       where: { id: parseInt(id) },
     });
@@ -118,7 +114,6 @@ const addParcelInGroupage = async (req, res) => {
   const { code, colisData } = req.body;
 
   try {
-    // Vérifier si le groupage existe
     const groupage = await prisma.groupage.findUnique({
       where: { code: code },
       include: { masterPacks: true },
