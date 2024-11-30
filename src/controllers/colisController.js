@@ -225,16 +225,19 @@ const getColisByMasterPack = async (req, res) => {
   }
 };
 
-const getMasterPacksByGroupage = async (req, res) => {
+export const getMasterPacksByGroupage = async (req, res) => {
   const { code } = req.params;
 
   try {
-    // Récupérer tous les master packs et colisMasterPacks d'un groupage
+    // Trouver le groupage et inclure uniquement les masterPacks et leurs colis
     const groupage = await prisma.groupage.findUnique({
       where: { code },
       include: {
-        masterPacks: true,
-        colisMasterPacks: true,
+        masterPacks: {
+          include: {
+            colis: true, // Inclure les colis liés aux masterPacks
+          },
+        },
       },
     });
 
@@ -242,18 +245,34 @@ const getMasterPacksByGroupage = async (req, res) => {
       return res.status(404).json({ error: "Groupage non trouvé" });
     }
 
-    // Combiner les masterPacks et colisMasterPacks
-    const allMasterPacks = [
-      ...groupage.masterPacks,
-      ...groupage.colisMasterPacks.map((cms) => ({
-        ...cms,
-        isColisMasterPack: true,
+    // Construire les masterPacks avec leurs colis
+    const masterPacks = groupage.masterPacks.map((masterPack) => ({
+      id: masterPack.id,
+      numero: masterPack.numero,
+      poids: masterPack.poids,
+      colis: masterPack.colis.map((colis) => ({
+        id: colis.id,
+        code: colis.code,
+        nom_complet: colis.nom_complet,
+        status: colis.status,
+        tracking_code: colis.tracking_code,
+        telephone: colis.telephone,
+        poids_colis: colis.poids_colis,
+        transportType: colis.transportType,
+        airType: colis.airType,
+        itemType: colis.itemType,
+        createdAt: colis.createdAt,
+        updatedAt: colis.updatedAt,
       })),
-    ];
+    }));
 
-    return res.status(200).json(allMasterPacks);
+    // Répondre avec les masterPacks et leurs colis
+    return res.status(200).json({
+      success: true,
+      masterPacks,
+    });
   } catch (error) {
-    console.error(error);
+    console.error("Erreur lors de la récupération des master packs :", error);
     return res
       .status(500)
       .json({ error: "Erreur lors de la récupération des master packs" });
