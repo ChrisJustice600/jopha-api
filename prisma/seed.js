@@ -33,6 +33,7 @@ async function main() {
   for (let i = 0; i < 20; i++) {
     groupages.push({
       code: faker.string.alphanumeric(10),
+      poids_colis: faker.number.int({ min: 1, max: 100 }).toString(), // Ajout de poids_colis
       status: faker.helpers.arrayElement([
         "RECEIVED",
         "GROUPED",
@@ -71,7 +72,7 @@ async function main() {
   for (let i = 0; i < 200; i++) {
     masterPacks.push({
       numero: faker.string.alphanumeric(10),
-      poids: faker.number.int({ min: 1, max: 100 }),
+      poids_colis: faker.number.int({ min: 1, max: 100 }).toString(), // Ajout de poids_colis
       groupageId: faker.helpers.arrayElement(allGroupageIds).id, // Assurez-vous que les IDs de groupage existent
     });
   }
@@ -99,7 +100,7 @@ async function main() {
         "DELIVERED",
       ]),
       tracking_code: faker.string.alphanumeric(10),
-      poids: faker.number.int({ min: 1, max: 100 }),
+      poids_colis: faker.number.int({ min: 1, max: 100 }).toString(), // Ajout de poids_colis
       telephone: faker.phone.number(),
       groupageId: faker.helpers.arrayElement(allGroupageIds).id, // Assurez-vous que les IDs de groupage existent
       masterPackId: faker.helpers.arrayElement(allMasterPackIds).id, // Assurez-vous que les IDs de masterPack existent

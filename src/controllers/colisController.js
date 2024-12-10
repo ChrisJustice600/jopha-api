@@ -220,7 +220,7 @@ const getColisByMasterPack = async (req, res) => {
   }
 };
 
-export const getMasterPacksByGroupage = async (req, res) => {
+const getMasterPacksByGroupage = async (req, res) => {
   const { code } = req.params;
 
   try {

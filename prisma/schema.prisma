@@ -23,6 +23,7 @@ model User {
 model Groupage {
   id            Int            @id @default(autoincrement())
   code          String         @unique
+  poids_colis   String?
   status        Status         @default(GROUPED)
   transportType TransportType?
   airType       AirTransport?
@@ -40,12 +41,12 @@ model Groupage {
 }
 
 model MasterPack {
-  id         Int      @id @default(autoincrement())
-  numero     String?
-  poids      Int?
-  groupageId Int
-  colis      Colis[]  @relation("MasterPackColis")
-  groupage   Groupage @relation("GroupageMasterPacks", fields: [groupageId], references: [id])
+  id          Int      @id @default(autoincrement())
+  numero      String?
+  poids_colis String?
+  groupageId  Int
+  colis       Colis[]  @relation("MasterPackColis")
+  groupage    Groupage @relation("GroupageMasterPacks", fields: [groupageId], references: [id])
 
   @@index([numero])
 }

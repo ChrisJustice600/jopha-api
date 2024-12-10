@@ -1,16 +1,33 @@
 const { prisma } = require("../../database/prisma");
 
 const createGroupage = async (req, res) => {
-  const { code } = req.body;
-  console.log(code);
+  const { code, poids_colis, transportType, airType } = req.body; // Destructure data from request body
 
   try {
+    // Create a new groupage using Prisma
     const groupage = await prisma.groupage.create({
-      data: { code },
+      data: {
+        code, // Mandatory field
+        poids_colis, // Optional field
+        transportType, // Optional field
+        airType: airType || null, // Optional field
+        status: "GROUPED", // Default value as per the schema
+      },
     });
-    res.status(201).json(groupage);
+    res.status(201).json(groupage); // Send back the created groupage object
   } catch (error) {
-    res.status(400).json({ error: "Erreur lors de la création du groupage." });
+    // Check if the error is a unique constraint violation
+    if (error.code === "P2002" && error.meta?.target?.includes("code")) {
+      res.status(400).json({
+        error:
+          "Un groupage avec ce code existe déjà. Veuillez utiliser un autre code.",
+      });
+    } else {
+      // Handle other errors
+      res.status(500).json({
+        error: "Une erreur est survenue lors de la création du groupage.",
+      });
+    }
   }
 };
 
