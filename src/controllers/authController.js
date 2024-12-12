@@ -55,12 +55,12 @@ async function signin(req, res) {
     const user = await findUserByEmail(email);
     console.log(user);
     if (!user) {
-      return res.status(401).json({ message: "Invalid email or password" }); // Handle invalid credentials
+      return res.status(401).json({ message: "Invalid email or password" });
     }
     const isPasswordValid = bcrypt.compareSync(password, user.password);
 
     if (!isPasswordValid) {
-      return res.status(401).json({ message: "Invalid email or password" }); // Handle invalid credentials
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
     const token = generateToken(user);

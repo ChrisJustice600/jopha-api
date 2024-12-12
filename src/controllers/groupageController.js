@@ -32,15 +32,76 @@ const createGroupage = async (req, res) => {
 };
 
 const getAllGroupagesWithDetails = async (req, res) => {
-  const { status } = req.query;
+  const { status, code, startDate, endDate, period } = req.query;
 
   try {
+    const now = new Date();
+    let filterDates = {};
+
+    // Handle predefined periods
+    if (period === "currentWeek") {
+      const startOfWeek = new Date(
+        now.setDate(now.getDate() - now.getDay() + 1)
+      );
+      const endOfWeek = new Date(now.setDate(startOfWeek.getDate() + 6));
+      filterDates = {
+        createdAt: {
+          gte: startOfWeek,
+          lte: endOfWeek,
+        },
+      };
+    } else if (period === "currentMonth") {
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      filterDates = {
+        createdAt: {
+          gte: startOfMonth,
+          lte: endOfMonth,
+        },
+      };
+    } else if (period === "currentYear") {
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
+      const endOfYear = new Date(now.getFullYear(), 11, 31);
+      filterDates = {
+        createdAt: {
+          gte: startOfYear,
+          lte: endOfYear,
+        },
+      };
+    }
+
+    // Handle custom date range
+    if (startDate && endDate) {
+      filterDates = {
+        createdAt: {
+          gte: new Date(startDate),
+          lte: new Date(endDate),
+        },
+      };
+    }
+
+    // Default to last 3 months
+    if (!period && !startDate && !endDate) {
+      const threeMonthsAgo = new Date(now.setMonth(now.getMonth() - 3));
+      filterDates = {
+        createdAt: {
+          gte: threeMonthsAgo,
+        },
+      };
+    }
+
+    // Build the query
+    const whereClause = {
+      status: status || undefined,
+      code: code || undefined,
+      ...filterDates,
+    };
+
+    // Fetch data
     const groupages = await prisma.groupage.findMany({
-      where: {
-        status: status || undefined,
-      },
+      where: whereClause,
       orderBy: {
-        updatedAt: "desc",
+        createdAt: "desc",
       },
       include: {
         masterPacks: {
@@ -50,8 +111,10 @@ const getAllGroupagesWithDetails = async (req, res) => {
         },
       },
     });
+
     res.status(200).json(groupages);
   } catch (error) {
+    console.error("Error fetching groupages:", error);
     res
       .status(400)
       .json({ error: "Erreur lors de la récupération des groupages." });
