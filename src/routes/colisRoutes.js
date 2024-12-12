@@ -33,8 +33,8 @@ authRouter.post(
 );
 
 // GET PARCEL BY MASTERPACK
-authRouter.post(
-  "/getMasterPacksByGroupage  /",
+authRouter.get(
+  "/getMasterPacksByGroupage/:code",
   colisController.getMasterPacksByGroupage
 );
 
