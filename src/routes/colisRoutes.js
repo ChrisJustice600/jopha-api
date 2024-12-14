@@ -21,6 +21,10 @@ authRouter.get("/getParcelById/:id", colisController.getParcelById);
 // );
 authRouter.put("/update/:id", colisController.updateColis);
 authRouter.delete("/delete/:id", colisController.deleteColis);
+authRouter.delete(
+  "/removeParcelFromMasterpack/:masterPackId/:colisId",
+  colisController.removeParcelFromMasterPack
+);
 authRouter.post("/addParcelInGroupage/", colisController.addParcelInGroupage);
 
 // GET PARCEL/COLIS BY GROUPAGE

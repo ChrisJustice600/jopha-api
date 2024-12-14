@@ -110,6 +110,84 @@ const deleteColis = async (req, res) => {
   }
 };
 
+const removeParcelFromMasterPack = async (req, res) => {
+  const { masterPackId, colisId } = req.params;
+  console.log(masterPackId, colisId);
+
+  try {
+    // Vérification si le colis existe et est associé au MasterPack
+    const colis = await prisma.colis.findUnique({
+      where: { id: parseInt(colisId) },
+    });
+
+    if (!colis) {
+      return res.status(404).json({ error: "Colis non trouvé" });
+    }
+
+    if (colis.masterPackId !== parseInt(masterPackId)) {
+      return res.status(400).json({
+        error: "Le colis n'est pas associé à ce MasterPack",
+      });
+    }
+
+    // Suppression de l'association avec le MasterPack
+    const updatedColis = await prisma.colis.update({
+      where: { id: parseInt(colisId) },
+      data: {
+        masterPackId: null, // Suppression de l'association
+      },
+    });
+
+    return res.status(200).json({
+      message: "Colis dissocié du MasterPack avec succès",
+      updatedColis,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la dissociation du colis :", error);
+    return res.status(500).json({ error: "Erreur interne du serveur" });
+  }
+};
+
+const updateParcelInMasterPack = async (req, res) => {
+  const { masterPackId, colisId } = req.params;
+  const { poids_colis, code } = req.body; // Exemples de champs modifiables
+  console.log(masterPackId, colisId, req.body);
+
+  try {
+    // Vérification si le colis existe et est associé au MasterPack
+    const colis = await prisma.colis.findUnique({
+      where: { id: parseInt(colisId) },
+    });
+
+    if (!colis) {
+      return res.status(404).json({ error: "Colis non trouvé" });
+    }
+
+    if (colis.masterPackId !== parseInt(masterPackId)) {
+      return res.status(400).json({
+        error: "Le colis n'est pas associé à ce MasterPack",
+      });
+    }
+
+    // Mise à jour des données du colis
+    const updatedColis = await prisma.colis.update({
+      where: { id: parseInt(colisId) },
+      data: {
+        poids_colis,
+        code,
+      },
+    });
+
+    return res.status(200).json({
+      message: "Colis mis à jour avec succès dans le MasterPack",
+      updatedColis,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour du colis :", error);
+    return res.status(500).json({ error: "Erreur interne du serveur" });
+  }
+};
+
 const addParcelInGroupage = async (req, res) => {
   const { code, colisData } = req.body;
 
@@ -382,4 +460,6 @@ module.exports = {
   getMasterPacksByGroupage,
   getFilteredColis,
   getParcelById,
+  removeParcelFromMasterPack,
+  updateParcelInMasterPack,
 };

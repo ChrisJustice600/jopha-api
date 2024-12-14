@@ -11,7 +11,7 @@ async function main() {
   const users = [];
   const emails = new Set();
 
-  for (let i = 0; i < 200; i++) {
+  for (let i = 0; i < 5; i++) {
     let email;
     do {
       email = faker.internet.email();
@@ -31,7 +31,7 @@ async function main() {
   // **Générer des groupages**
   console.log("Génération des groupages...");
   const groupages = [];
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 5; i++) {
     groupages.push({
       code: faker.string.alphanumeric(10),
       poids_colis: faker.number.int({ min: 1, max: 100 }).toString(),
@@ -71,7 +71,7 @@ async function main() {
   // **Générer des master packs**
   console.log("Génération des master packs...");
   const masterPacks = [];
-  for (let i = 0; i < 200; i++) {
+  for (let i = 0; i < 15; i++) {
     masterPacks.push({
       numero: faker.string.alphanumeric(10),
       poids_colis: faker.number.int({ min: 1, max: 100 }).toString(),
@@ -88,7 +88,7 @@ async function main() {
   // **Générer des colis**
   console.log("Génération des colis...");
   const colis = [];
-  for (let i = 0; i < 2000; i++) {
+  for (let i = 0; i < 100; i++) {
     colis.push({
       code: faker.string.alphanumeric(10),
       nom_complet: faker.person.fullName(),

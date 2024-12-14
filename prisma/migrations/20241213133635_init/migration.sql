@@ -30,7 +30,7 @@ CREATE TABLE "User" (
 CREATE TABLE "Groupage" (
     "id" SERIAL NOT NULL,
     "code" TEXT NOT NULL,
-    "poids_colis" TEXT NOT NULL,
+    "poids_colis" TEXT,
     "status" "Status" NOT NULL DEFAULT 'GROUPED',
     "transportType" "TransportType",
     "airType" "AirTransport",
