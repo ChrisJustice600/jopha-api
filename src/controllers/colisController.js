@@ -404,12 +404,24 @@ const getMasterPacksByGroupage = async (req, res) => {
 };
 
 const createNewMasterPackInGroupage = async (req, res) => {
-  const { groupageId, poids_colis, numero } = req.body;
+  const { code, numero } = req.body;
 
   try {
-    // Trouver les MasterPacks existants dans le Groupage
+    // Trouver le groupage avec le code donné
+    const groupage = await prisma.groupage.findUnique({
+      where: { code }, // Recherche par code
+    });
+
+    // Vérifier si le groupage existe
+    if (!groupage) {
+      return res.status(404).json({
+        error: `Aucun groupage trouvé avec le code ${code}.`,
+      });
+    }
+
+    // Récupérer les MasterPacks existants dans le groupage
     const masterPacks = await prisma.masterPack.findMany({
-      where: { groupageId },
+      where: { groupageId: groupage.id }, // Utiliser l'ID du groupage trouvé
       orderBy: { numero: "asc" },
     });
 
@@ -444,8 +456,7 @@ const createNewMasterPackInGroupage = async (req, res) => {
       data: {
         numero,
         poids_colis,
-        groupageId,
-        // Aucun colis associé au départ
+        groupageId: groupage.id, // Utiliser l'ID du groupage trouvé
       },
     });
 
