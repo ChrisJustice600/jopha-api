@@ -318,11 +318,62 @@ const getMasterPacksByGroupage = async (req, res) => {
       return res.status(404).json({ error: "Groupage non trouvé" });
     }
 
-    // Construire les masterPacks avec leurs colis
-    const masterPacks = groupage.masterPacks.map((masterPack) => ({
+    // Supprimer les MasterPacks vides qui ne sont pas le dernier
+    const updatedMasterPacks = await Promise.all(
+      groupage.masterPacks.map(async (masterPack, index) => {
+        if (
+          masterPack.colis.length === 0 &&
+          index !== groupage.masterPacks.length - 1
+        ) {
+          // Supprimer ce MasterPack
+          await prisma.masterPack.delete({
+            where: { id: masterPack.id },
+          });
+          return null;
+        }
+        return masterPack;
+      })
+    );
+
+    // Filtrer les MasterPacks supprimés
+    const filteredMasterPacks = updatedMasterPacks.filter(Boolean);
+
+    // Réordonner les numéros des MasterPacks
+    await Promise.all(
+      filteredMasterPacks.map(async (masterPack, index) => {
+        const numero = `MP#${String(index + 1).padStart(2, "0")}`;
+        if (masterPack.numero !== numero) {
+          await prisma.masterPack.update({
+            where: { id: masterPack.id },
+            data: { numero },
+          });
+        }
+      })
+    );
+
+    // Calculer le poids total des colis pour chaque MasterPack
+    await Promise.all(
+      filteredMasterPacks.map(async (masterPack) => {
+        const totalPoidsColis = masterPack.colis.reduce((total, colis) => {
+          const poids = parseFloat(colis.poids_colis) || 0;
+          return total + poids;
+        }, 0);
+
+        await prisma.masterPack.update({
+          where: { id: masterPack.id },
+          data: { poids_colis: totalPoidsColis.toFixed(2) },
+        });
+
+        // Mettre à jour le poids localement pour la réponse
+        masterPack.poids_colis = totalPoidsColis.toFixed(2);
+      })
+    );
+
+    // Reconstruire les données des MasterPacks avec leurs colis
+    const masterPacks = filteredMasterPacks.map((masterPack) => ({
       id: masterPack.id,
       numero: masterPack.numero,
-      poids: masterPack.poids,
+      poids_colis: masterPack.poids_colis,
       colis: masterPack.colis.map((colis) => ({
         id: colis.id,
         code: colis.code,
@@ -339,7 +390,7 @@ const getMasterPacksByGroupage = async (req, res) => {
       })),
     }));
 
-    // Répondre avec les masterPacks et leurs colis
+    // Répondre avec les MasterPacks et leurs colis
     return res.status(200).json({
       success: true,
       masterPacks,
