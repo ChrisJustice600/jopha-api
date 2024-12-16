@@ -403,6 +403,64 @@ const getMasterPacksByGroupage = async (req, res) => {
   }
 };
 
+const createNewMasterPackInGroupage = async (req, res) => {
+  const { groupageId, poids_colis, numero } = req.body;
+
+  try {
+    // Trouver les MasterPacks existants dans le Groupage
+    const masterPacks = await prisma.masterPack.findMany({
+      where: { groupageId },
+      orderBy: { numero: "asc" },
+    });
+
+    // Extraire les numéros des MasterPacks existants sous forme de nombres pour comparaison
+    const masterPackNumbers = masterPacks.map((pack) => {
+      const match = pack.numero.match(/MP#(\d+)/);
+      return match ? parseInt(match[1], 10) : 0;
+    });
+
+    // Vérifier si le numéro fourni est déjà utilisé
+    const isNumeroUsed = masterPacks.some((pack) => pack.numero === numero);
+    if (isNumeroUsed) {
+      return res.status(400).json({
+        error: `Le numéro ${numero} est déjà utilisé pour un autre MasterPack.`,
+      });
+    }
+
+    // Vérifier s'il existe un MasterPack après le numéro fourni
+    const hasFollowingMasterPack = masterPackNumbers.some(
+      (num) => num > parseInt(numero.replace("MP#", ""), 10)
+    );
+
+    if (hasFollowingMasterPack) {
+      return res.status(400).json({
+        error:
+          "Impossible de créer un nouveau MasterPack tant qu'il existe un MasterPack suivant.",
+      });
+    }
+
+    // Créer le nouveau MasterPack sans relation avec des colis
+    const newMasterPack = await prisma.masterPack.create({
+      data: {
+        numero,
+        poids_colis,
+        groupageId,
+        // Aucun colis associé au départ
+      },
+    });
+
+    return res.status(201).json({
+      success: true,
+      masterPack: newMasterPack,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la création du master pack :", error);
+    return res.status(500).json({
+      error: "Erreur lors de la création du master pack",
+    });
+  }
+};
+
 const getFilteredColis = async (req, res) => {
   const { nom_complet, code, telephone, date, startDate, endDate } = req.query;
 
@@ -513,4 +571,5 @@ module.exports = {
   getParcelById,
   removeParcelFromMasterPack,
   updateParcelInMasterPack,
+  createNewMasterPackInGroupage,
 };
