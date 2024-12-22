@@ -318,29 +318,9 @@ const getMasterPacksByGroupage = async (req, res) => {
       return res.status(404).json({ error: "Groupage non trouvé" });
     }
 
-    // Supprimer les MasterPacks vides qui ne sont pas le dernier
-    const updatedMasterPacks = await Promise.all(
-      groupage.masterPacks.map(async (masterPack, index) => {
-        if (
-          masterPack.colis.length === 0 &&
-          index !== groupage.masterPacks.length - 1
-        ) {
-          // Supprimer ce MasterPack
-          await prisma.masterPack.delete({
-            where: { id: masterPack.id },
-          });
-          return null;
-        }
-        return masterPack;
-      })
-    );
-
-    // Filtrer les MasterPacks supprimés
-    const filteredMasterPacks = updatedMasterPacks.filter(Boolean);
-
     // Réordonner les numéros des MasterPacks
     await Promise.all(
-      filteredMasterPacks.map(async (masterPack, index) => {
+      groupage.masterPacks.map(async (masterPack, index) => {
         const numero = `MP#${String(index + 1).padStart(2, "0")}`;
         if (masterPack.numero !== numero) {
           await prisma.masterPack.update({
@@ -353,7 +333,7 @@ const getMasterPacksByGroupage = async (req, res) => {
 
     // Calculer le poids total des colis pour chaque MasterPack
     await Promise.all(
-      filteredMasterPacks.map(async (masterPack) => {
+      groupage.masterPacks.map(async (masterPack) => {
         const totalPoidsColis = masterPack.colis.reduce((total, colis) => {
           const poids = parseFloat(colis.poids_colis) || 0;
           return total + poids;
@@ -370,7 +350,7 @@ const getMasterPacksByGroupage = async (req, res) => {
     );
 
     // Reconstruire les données des MasterPacks avec leurs colis
-    const masterPacks = filteredMasterPacks.map((masterPack) => ({
+    const masterPacks = groupage.masterPacks.map((masterPack) => ({
       id: masterPack.id,
       numero: masterPack.numero,
       poids_colis: masterPack.poids_colis,
@@ -402,9 +382,8 @@ const getMasterPacksByGroupage = async (req, res) => {
       .json({ error: "Erreur lors de la récupération des master packs" });
   }
 };
-
 const createNewMasterPackInGroupage = async (req, res) => {
-  const { code, numero } = req.body;
+  const { code } = req.body;
 
   try {
     // Trouver le groupage avec le code donné
@@ -419,43 +398,43 @@ const createNewMasterPackInGroupage = async (req, res) => {
       });
     }
 
-    // Récupérer les MasterPacks existants dans le groupage
+    // Récupérer les MasterPacks existants dans le groupage, triés par numéro
     const masterPacks = await prisma.masterPack.findMany({
       where: { groupageId: groupage.id }, // Utiliser l'ID du groupage trouvé
-      orderBy: { numero: "asc" },
+      orderBy: { numero: "asc" }, // Trier par numéro
+      include: { colis: true }, // Inclure les colis associés aux MasterPacks
     });
 
-    // Extraire les numéros des MasterPacks existants sous forme de nombres pour comparaison
-    const masterPackNumbers = masterPacks.map((pack) => {
-      const match = pack.numero.match(/MP#(\d+)/);
-      return match ? parseInt(match[1], 10) : 0;
-    });
-
-    // Vérifier si le numéro fourni est déjà utilisé
-    const isNumeroUsed = masterPacks.some((pack) => pack.numero === numero);
-    if (isNumeroUsed) {
-      return res.status(400).json({
-        error: `Le numéro ${numero} est déjà utilisé pour un autre MasterPack.`,
-      });
-    }
-
-    // Vérifier s'il existe un MasterPack après le numéro fourni
-    const hasFollowingMasterPack = masterPackNumbers.some(
-      (num) => num > parseInt(numero.replace("MP#", ""), 10)
-    );
-
-    if (hasFollowingMasterPack) {
+    // Vérifier si des MasterPacks existent dans le groupage
+    if (masterPacks.length === 0) {
       return res.status(400).json({
         error:
-          "Impossible de créer un nouveau MasterPack tant qu'il existe un MasterPack suivant.",
+          "Impossible de créer un MasterPack car aucun MasterPack n'existe dans ce groupage.",
       });
     }
 
-    // Créer le nouveau MasterPack sans relation avec des colis
+    // Extraire le dernier MasterPack
+    const lastMasterPack = masterPacks[masterPacks.length - 1];
+
+    // Vérifier si le dernier MasterPack contient au moins un colis
+    if (lastMasterPack.colis.length === 0) {
+      return res.status(400).json({
+        error:
+          "Impossible de créer un nouveau MasterPack car le dernier MasterPack n'a aucun colis associé.",
+      });
+    }
+
+    // Générer le numéro suivant
+    const lastNumero = lastMasterPack.numero;
+    const lastNumeroNumber = parseInt(lastNumero.replace("MP#", ""), 10); // Extraire le numéro
+    const nextNumeroNumber = lastNumeroNumber + 1; // Incrémenter
+    const nextNumero = `MP#${String(nextNumeroNumber).padStart(2, "0")}`; // Formatage : MP#01, MP#02, etc.
+
+    // Créer le nouveau MasterPack avec le numéro généré
     const newMasterPack = await prisma.masterPack.create({
       data: {
-        numero,
-        poids_colis,
+        numero: nextNumero,
+        poids_colis: "0", // Valeur par défaut ou à définir selon tes besoins
         groupageId: groupage.id, // Utiliser l'ID du groupage trouvé
       },
     });
@@ -471,7 +450,6 @@ const createNewMasterPackInGroupage = async (req, res) => {
     });
   }
 };
-
 const getFilteredColis = async (req, res) => {
   const { nom_complet, code, telephone, date, startDate, endDate } = req.query;
 

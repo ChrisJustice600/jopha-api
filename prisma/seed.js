@@ -1,154 +1,214 @@
 const { PrismaClient } = require("@prisma/client");
-const { faker } = require("@faker-js/faker");
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("Début de la génération de données...");
+  console.log("Démarrage du seed...");
 
-  // **Générer des utilisateurs**
-  console.log("Génération des utilisateurs...");
-  const users = [];
-  const emails = new Set();
+  const groupagesData = [
+    {
+      code: "0829",
+      poids_colis: "150",
+      status: "GROUPED",
+      transportType: "AERIEN",
+      airType: "REGULIER",
+      masterPacks: [
+        {
+          numero: "MP#01",
+          poids_colis: "50",
+          colis: [
+            {
+              code: "COL0001",
+              nom_complet: "Jean Dupont",
+              status: "RECEIVED",
+              tracking_code: "TRK0001",
+              telephone: "0601020304",
+              poids_colis: "10",
+              transportType: "AERIEN",
+              airType: "EXPRESS",
+              createdAt: new Date("2024-01-05T10:30:00Z"),
+              updatedAt: new Date("2024-01-10T15:00:00Z"),
+            },
+          ],
+        },
+        {
+          numero: "MP#02",
+          poids_colis: "60",
+          colis: [
+            {
+              code: "COL0003",
+              nom_complet: "Paul Morel",
+              status: "DELIVERED",
+              tracking_code: "TRK0003",
+              telephone: "0623040506",
+              poids_colis: "20",
+              transportType: "MARITIME",
+              airType: "REGULIER",
+              createdAt: new Date("2024-01-15T09:00:00Z"),
+              updatedAt: new Date("2024-01-20T16:30:00Z"),
+            },
+          ],
+        },
+        {
+          numero: "MP#03",
+          poids_colis: "60",
+          colis: [
+            {
+              code: "COL00012",
+              nom_complet: "Paul Morel",
+              status: "DELIVERED",
+              tracking_code: "TRK0003",
+              telephone: "0623040506",
+              poids_colis: "20",
+              transportType: "MARITIME",
+              airType: "REGULIER",
+              createdAt: new Date("2024-01-15T09:00:00Z"),
+              updatedAt: new Date("2024-01-20T16:30:00Z"),
+            },
+          ],
+        },
+      ],
+    },
+    {
+      code: "0923",
+      poids_colis: "150",
+      status: "GROUPED",
+      transportType: "AERIEN",
+      airType: "REGULIER",
+      masterPacks: [
+        {
+          numero: "MP#01",
+          poids_colis: "50",
+          colis: [
+            {
+              code: "CO",
+              nom_complet: "Jean Dupont",
+              status: "RECEIVED",
+              tracking_code: "TRK0001",
+              telephone: "0601020304",
+              poids_colis: "10",
+              transportType: "AERIEN",
+              airType: "EXPRESS",
+              createdAt: new Date("2024-01-05T10:30:00Z"),
+              updatedAt: new Date("2024-01-10T15:00:00Z"),
+            },
+          ],
+        },
+        {
+          numero: "MP#082",
+          poids_colis: "60",
+          colis: [
+            {
+              code: "COL3002",
+              nom_complet: "Paul Morel",
+              status: "DELIVERED",
+              tracking_code: "TRK0003",
+              telephone: "0623040506",
+              poids_colis: "20",
+              transportType: "MARITIME",
+              airType: "REGULIER",
+              createdAt: new Date("2024-01-15T09:00:00Z"),
+              updatedAt: new Date("2024-01-20T16:30:00Z"),
+            },
+          ],
+        },
+        {
+          numero: "MP#043",
+          poids_colis: "60",
+          colis: [
+            {
+              code: "COL0412",
+              nom_complet: "Paul Morel",
+              status: "DELIVERED",
+              tracking_code: "TRK0003",
+              telephone: "0623040506",
+              poids_colis: "20",
+              transportType: "MARITIME",
+              airType: "REGULIER",
+              createdAt: new Date("2024-01-15T09:00:00Z"),
+              updatedAt: new Date("2024-01-20T16:30:00Z"),
+            },
+          ],
+        },
+      ],
+    },
+  ];
 
-  for (let i = 0; i < 5; i++) {
-    let email;
-    do {
-      email = faker.internet.email();
-    } while (emails.has(email));
-    emails.add(email);
-
-    users.push({
-      email,
-      password: faker.internet.password(),
-      username: faker.internet.userName(),
-      role: faker.helpers.arrayElement(["USER", "ADMIN"]),
+  for (const groupage of groupagesData) {
+    const existingGroupage = await prisma.groupage.findUnique({
+      where: { code: groupage.code },
     });
+
+    if (existingGroupage) {
+      // Vérifier si le code est déjà utilisé
+      const groupageWithSameCode = await prisma.groupage.findUnique({
+        where: { code: groupage.code },
+      });
+
+      if (
+        groupageWithSameCode &&
+        groupageWithSameCode.id !== existingGroupage.id
+      ) {
+        console.error(
+          `Le code ${groupage.code} est déjà utilisé par un autre groupage.`
+        );
+        continue; // Ignorer la mise à jour
+      }
+
+      // Mise à jour si l'entrée existe
+      await prisma.masterPack.deleteMany({
+        where: { groupageId: existingGroupage.id },
+      }); // Supprime les relations existantes
+
+      await prisma.groupage.update({
+        where: { code: groupage.code },
+        data: {
+          poids_colis: groupage.poids_colis,
+          status: groupage.status,
+          transportType: groupage.transportType,
+          airType: groupage.airType,
+          masterPacks: {
+            create: groupage.masterPacks.map((pack) => ({
+              numero: pack.numero,
+              poids_colis: pack.poids_colis,
+              colis: {
+                create: pack.colis,
+              },
+            })),
+          },
+        },
+      });
+      console.log(`Groupage mis à jour : ${groupage.code}`);
+    } else {
+      // Création si l'entrée n'existe pas
+      await prisma.groupage.create({
+        data: {
+          code: groupage.code,
+          poids_colis: groupage.poids_colis,
+          status: groupage.status,
+          transportType: groupage.transportType,
+          airType: groupage.airType,
+          masterPacks: {
+            create: groupage.masterPacks.map((pack) => ({
+              numero: pack.numero,
+              poids_colis: pack.poids_colis,
+              colis: {
+                create: pack.colis,
+              },
+            })),
+          },
+        },
+      });
+      console.log(`Groupage créé : ${groupage.code}`);
+    }
   }
 
-  await prisma.user.createMany({ data: users });
-
-  // **Générer des groupages**
-  console.log("Génération des groupages...");
-  const groupages = [];
-  for (let i = 0; i < 5; i++) {
-    groupages.push({
-      code: faker.string.alphanumeric(10),
-      poids_colis: faker.number.int({ min: 1, max: 100 }).toString(),
-      status: faker.helpers.arrayElement([
-        "RECEIVED",
-        "GROUPED",
-        "IN_TRANSIT",
-        "ARRIVED",
-        "DELIVERED",
-      ]),
-      transportType: faker.helpers.arrayElement(["AERIEN", "MARITIME"]),
-      airType: faker.helpers.arrayElement(["REGULIER", "EXPRESS"]),
-    });
-  }
-
-  await prisma.groupage.createMany({ data: groupages });
-
-  const allGroupageIds = await prisma.groupage.findMany({
-    select: { id: true },
-  });
-
-  // **Générer des clients avec code**
-  console.log("Génération des clients avec code...");
-  const clientsAvecCode = [];
-  for (let i = 0; i < 7; i++) {
-    clientsAvecCode.push({
-      code: faker.string.alphanumeric(10),
-    });
-  }
-
-  await prisma.clientAvecCode.createMany({ data: clientsAvecCode });
-
-  const allClientAvecCodeIds = await prisma.clientAvecCode.findMany({
-    select: { id: true },
-  });
-
-  // **Générer des master packs**
-  console.log("Génération des master packs...");
-  const masterPacks = [];
-  for (let i = 0; i < 15; i++) {
-    masterPacks.push({
-      numero: faker.string.alphanumeric(10),
-      poids_colis: faker.number.int({ min: 1, max: 100 }).toString(),
-      groupageId: faker.helpers.arrayElement(allGroupageIds).id,
-    });
-  }
-
-  await prisma.masterPack.createMany({ data: masterPacks });
-
-  const allMasterPackIds = await prisma.masterPack.findMany({
-    select: { id: true },
-  });
-
-  // **Générer des colis**
-  console.log("Génération des colis...");
-  const colis = [];
-  for (let i = 0; i < 100; i++) {
-    colis.push({
-      code: faker.string.alphanumeric(10),
-      nom_complet: faker.person.fullName(),
-      status: faker.helpers.arrayElement([
-        "RECEIVED",
-        "GROUPED",
-        "IN_TRANSIT",
-        "ARRIVED",
-        "DELIVERED",
-      ]),
-      tracking_code: faker.string.alphanumeric(10),
-      poids_colis: faker.number.int({ min: 1, max: 100 }).toString(),
-      telephone: faker.phone.number(),
-      groupageId: faker.datatype.boolean()
-        ? faker.helpers.arrayElement(allGroupageIds).id
-        : null,
-      masterPackId: faker.datatype.boolean()
-        ? faker.helpers.arrayElement(allMasterPackIds).id
-        : null,
-      transportType: faker.helpers.arrayElement(["AERIEN", "MARITIME"]),
-      airType: faker.helpers.arrayElement(["REGULIER", "EXPRESS"]),
-      clientAvecCodeId: faker.datatype.boolean()
-        ? faker.helpers.arrayElement(allClientAvecCodeIds).id
-        : null,
-    });
-  }
-
-  await prisma.colis.createMany({ data: colis });
-
-  const allColisIds = await prisma.colis.findMany({ select: { id: true } });
-
-  // **Générer des notes**
-  console.log("Génération des notes...");
-  const notes = [];
-  const allUserIds = await prisma.user.findMany({ select: { id: true } });
-
-  for (let i = 0; i < 200; i++) {
-    notes.push({
-      contenu: faker.lorem.sentence(),
-      userId: faker.helpers.arrayElement(allUserIds).id,
-      colisId: faker.datatype.boolean()
-        ? faker.helpers.arrayElement(allColisIds).id
-        : null,
-      groupageId: faker.datatype.boolean()
-        ? faker.helpers.arrayElement(allGroupageIds).id
-        : null,
-    });
-  }
-
-  for (let i = 0; i < notes.length; i += 100) {
-    const batch = notes.slice(i, i + 100);
-    await prisma.note.createMany({ data: batch });
-  }
-
-  console.log("Données générées avec succès !");
+  console.log("Seed terminé avec succès !");
 }
 
 main()
   .catch((e) => {
-    console.error("Erreur lors de la génération des données :", e);
+    console.error("Erreur lors du seed :", e);
     process.exit(1);
   })
   .finally(async () => {

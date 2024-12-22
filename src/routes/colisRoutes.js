@@ -25,6 +25,10 @@ authRouter.delete(
   "/removeParcelFromMasterpack/:masterPackId/:colisId",
   colisController.removeParcelFromMasterPack
 );
+authRouter.post(
+  "/createNewMasterPackInGroupage",
+  colisController.createNewMasterPackInGroupage
+);
 authRouter.post("/addParcelInGroupage/", colisController.addParcelInGroupage);
 
 // GET PARCEL/COLIS BY GROUPAGE

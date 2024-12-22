@@ -12,6 +12,17 @@ const createGroupage = async (req, res) => {
         transportType, // Optional field
         airType: airType || null, // Optional field
         status: "GROUPED", // Default value as per the schema
+        masterPacks: {
+          create: [
+            {
+              numero: "MP#01",
+              poids_colis: "0.00",
+            },
+          ],
+        },
+      },
+      include: {
+        masterPacks: true, // Include masterPacks in the response
       },
     });
     res.status(201).json(groupage); // Send back the created groupage object
