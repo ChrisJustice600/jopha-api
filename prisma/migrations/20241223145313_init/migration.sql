@@ -122,6 +122,9 @@ CREATE INDEX "Groupage_createdAt_idx" ON "Groupage"("createdAt");
 CREATE INDEX "MasterPack_numero_idx" ON "MasterPack"("numero");
 
 -- CreateIndex
+CREATE INDEX "MasterPack_id_idx" ON "MasterPack"("id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Colis_code_key" ON "Colis"("code");
 
 -- CreateIndex

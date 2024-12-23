@@ -49,6 +49,7 @@ model MasterPack {
   groupage    Groupage @relation("GroupageMasterPacks", fields: [groupageId], references: [id])
 
   @@index([numero])
+  @@index([id])
 }
 
 model Colis {

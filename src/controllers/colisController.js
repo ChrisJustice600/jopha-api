@@ -190,8 +190,11 @@ const updateParcelInMasterPack = async (req, res) => {
 
 const addParcelInGroupage = async (req, res) => {
   const { code, colisData } = req.body;
+  console.log("code:", code);
+  console.log("colisData:", colisData);
 
   try {
+    // Récupérer le groupage et ses master packs
     const groupage = await prisma.groupage.findUnique({
       where: { code: code },
       include: { masterPacks: true },
@@ -201,33 +204,36 @@ const addParcelInGroupage = async (req, res) => {
       return res.status(404).json({ error: "Groupage non trouvé" });
     }
 
+    // Trier les master packs par date de création (si nécessaire)
+    const sortedMasterPacks = groupage.masterPacks.sort(
+      (a, b) => new Date(a.createdAt) - new Date(b.createdAt) // Assurez-vous que `createdAt` existe
+    );
+
     // Récupérer le dernier master pack ou en créer un si aucun n'existe
-    let dernierMasterPack =
-      groupage.masterPacks[groupage.masterPacks.length - 1];
+    let dernierMasterPack = sortedMasterPacks[sortedMasterPacks.length - 1];
 
     if (!dernierMasterPack) {
-      // Si aucun master pack, créer le premier
+      // Créer un nouveau master pack si aucun n'existe
       dernierMasterPack = await prisma.masterPack.create({
         data: {
-          groupage: { connect: { id: groupage.id } }, // Associer au groupage
+          groupage: { connect: { id: groupage.id } },
         },
       });
     }
-    console.log(colisData);
 
-    // Ajouter le colis à ce master pack
+    // Ajouter le colis au dernier master pack
     const colis = await prisma.colis.update({
       where: { id: colisData.id },
       data: {
-        nom_complet: colisData.nom_complet || "Nom par défaut", // Exemple de valeur par défaut
-        telephone: colisData.telephone || "0000000000", // Exemple de valeur par défaut
-        masterPack: { connect: { id: dernierMasterPack.id } }, // Associer au master pack
-        groupage: { connect: { id: groupage.id } }, // Associer au groupage
-        code: colisData.code || null, // Nullable
-        status: "GROUPED", // Status par défaut ou valeur fournie
-        poids: colisData.poids || null, // Nullable
-        transportType: colisData.transportType || null, // Nullable
-        airType: colisData.airType || null, // Nullable
+        nom_complet: colisData.nom_complet || "Nom par défaut",
+        telephone: colisData.telephone || "0000000000",
+        masterPack: { connect: { id: dernierMasterPack.id } },
+        groupage: { connect: { id: groupage.id } },
+        code: colisData.code || null,
+        status: "GROUPED",
+        poids_colis: colisData.poids_colis || null,
+        transportType: colisData.transportType || null,
+        airType: colisData.airType || null,
       },
     });
 
