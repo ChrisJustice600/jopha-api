@@ -194,7 +194,7 @@ const addParcelInGroupage = async (req, res) => {
   console.log("colisData:", colisData);
 
   try {
-    // Récupérer le groupage et ses master packs
+    // Récupérer le groupage et ses master packs associés
     const groupage = await prisma.groupage.findUnique({
       where: { code: code },
       include: { masterPacks: true },
@@ -204,31 +204,35 @@ const addParcelInGroupage = async (req, res) => {
       return res.status(404).json({ error: "Groupage non trouvé" });
     }
 
-    // Trier les master packs par date de création (si nécessaire)
-    const sortedMasterPacks = groupage.masterPacks.sort(
-      (a, b) => new Date(a.createdAt) - new Date(b.createdAt) // Assurez-vous que `createdAt` existe
-    );
+    let masterPack;
 
-    // Récupérer le dernier master pack ou en créer un si aucun n'existe
-    let dernierMasterPack = sortedMasterPacks[sortedMasterPacks.length - 1];
-
-    if (!dernierMasterPack) {
-      // Créer un nouveau master pack si aucun n'existe
-      dernierMasterPack = await prisma.masterPack.create({
-        data: {
-          groupage: { connect: { id: groupage.id } },
-        },
+    if (groupage.masterPacks.length === 1) {
+      // Cas où il y a un seul master pack : utiliser ce master pack
+      masterPack = groupage.masterPacks[0];
+      console.log("Un seul master pack trouvé :", masterPack.numero);
+    } else if (groupage.masterPacks.length > 1) {
+      // Cas où il y a plusieurs master packs : trouver le dernier basé sur le numéro
+      masterPack = groupage.masterPacks.reduce((prev, curr) => {
+        const prevNum = parseInt(prev.numero?.replace(/^\D+/g, "") || "0", 10);
+        const currNum = parseInt(curr.numero?.replace(/^\D+/g, "") || "0", 10);
+        return currNum > prevNum ? curr : prev;
       });
+      console.log("Dernier master pack trouvé :", masterPack.numero);
+    } else {
+      // Cas où aucun master pack n'est associé (non spécifié dans votre scénario)
+      return res
+        .status(400)
+        .json({ error: "Aucun master pack trouvé pour ce groupage." });
     }
 
-    // Ajouter le colis au dernier master pack
+    // Ajouter le colis au master pack trouvé
     const colis = await prisma.colis.update({
       where: { id: colisData.id },
       data: {
         nom_complet: colisData.nom_complet || "Nom par défaut",
         telephone: colisData.telephone || "0000000000",
-        masterPack: { connect: { id: dernierMasterPack.id } },
-        groupage: { connect: { id: groupage.id } },
+        masterPack: { connect: { id: masterPack.id } }, // Associer au master pack trouvé
+        groupage: { connect: { id: groupage.id } }, // Associer au groupage
         code: colisData.code || null,
         status: "GROUPED",
         poids_colis: colisData.poids_colis || null,
@@ -308,7 +312,7 @@ const getMasterPacksByGroupage = async (req, res) => {
   const { code } = req.params;
 
   try {
-    // Trouver le groupage et inclure uniquement les masterPacks et leurs colis
+    // Trouver le groupage et inclure les masterPacks avec leurs colis
     const groupage = await prisma.groupage.findUnique({
       where: { code },
       include: {
@@ -324,62 +328,36 @@ const getMasterPacksByGroupage = async (req, res) => {
       return res.status(404).json({ error: "Groupage non trouvé" });
     }
 
-    // Réordonner les numéros des MasterPacks
-    await Promise.all(
-      groupage.masterPacks.map(async (masterPack, index) => {
-        const numero = `MP#${String(index + 1).padStart(2, "0")}`;
-        if (masterPack.numero !== numero) {
-          await prisma.masterPack.update({
-            where: { id: masterPack.id },
-            data: { numero },
-          });
-        }
-      })
-    );
-
-    // Calculer le poids total des colis pour chaque MasterPack
-    await Promise.all(
+    // Calculer et mettre à jour le poids total des colis pour chaque MasterPack
+    const updatedMasterPacks = await Promise.all(
       groupage.masterPacks.map(async (masterPack) => {
         const totalPoidsColis = masterPack.colis.reduce((total, colis) => {
-          const poids = parseFloat(colis.poids_colis) || 0;
+          const poids = parseFloat(colis.poids_colis) || 0; // Convertir le poids en nombre ou utiliser 0 par défaut
           return total + poids;
         }, 0);
 
-        await prisma.masterPack.update({
+        // Mettre à jour le poids dans la base de données
+        const updatedMasterPack = await prisma.masterPack.update({
           where: { id: masterPack.id },
           data: { poids_colis: totalPoidsColis.toFixed(2) },
         });
 
-        // Mettre à jour le poids localement pour la réponse
-        masterPack.poids_colis = totalPoidsColis.toFixed(2);
+        // Ajouter les colis pour la réponse
+        return { ...updatedMasterPack, colis: masterPack.colis };
       })
     );
 
-    // Reconstruire les données des MasterPacks avec leurs colis
-    const masterPacks = groupage.masterPacks.map((masterPack) => ({
-      id: masterPack.id,
-      numero: masterPack.numero,
-      poids_colis: masterPack.poids_colis,
-      colis: masterPack.colis.map((colis) => ({
-        id: colis.id,
-        code: colis.code,
-        nom_complet: colis.nom_complet,
-        status: colis.status,
-        tracking_code: colis.tracking_code,
-        telephone: colis.telephone,
-        poids_colis: colis.poids_colis,
-        transportType: colis.transportType,
-        airType: colis.airType,
-        itemType: colis.itemType,
-        createdAt: colis.createdAt,
-        updatedAt: colis.updatedAt,
-      })),
-    }));
+    // Trier les masterPacks en décroissant selon la partie numérique de leur numéro
+    const sortedMasterPacks = updatedMasterPacks.sort((a, b) => {
+      const numeroA = parseInt(a.numero.replace(/\D/g, ""), 10) || 0;
+      const numeroB = parseInt(b.numero.replace(/\D/g, ""), 10) || 0;
+      return numeroB - numeroA; // Décroissant
+    });
 
-    // Répondre avec les MasterPacks et leurs colis
+    // Répondre avec les MasterPacks triés
     return res.status(200).json({
       success: true,
-      masterPacks,
+      masterPacks: sortedMasterPacks,
     });
   } catch (error) {
     console.error("Erreur lors de la récupération des master packs :", error);
@@ -388,6 +366,7 @@ const getMasterPacksByGroupage = async (req, res) => {
       .json({ error: "Erreur lors de la récupération des master packs" });
   }
 };
+
 const createNewMasterPackInGroupage = async (req, res) => {
   const { code } = req.body;
 
