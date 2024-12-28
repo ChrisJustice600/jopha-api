@@ -143,4 +143,38 @@ const getAllGroupagesWithDetails = async (req, res) => {
   }
 };
 
-module.exports = { createGroupage, getAllGroupagesWithDetails };
+const deleteGroupage = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Supprimer d'abord les colis associés
+    await prisma.colis.deleteMany({
+      where: { groupageId: Number(id) },
+    });
+
+    // Supprimer ensuite les master packs associés
+    await prisma.masterPack.deleteMany({
+      where: { groupageId: Number(id) },
+    });
+
+    // Enfin, supprimer le groupage
+    const groupage = await prisma.groupage.delete({
+      where: { id: Number(id) },
+    });
+
+    res
+      .status(200)
+      .json({ message: "Groupage supprimé avec succès.", groupage });
+  } catch (error) {
+    console.log(error);
+    if (error.code === "P2025") {
+      res.status(404).json({ error: "Groupage non trouvé." });
+    } else {
+      res.status(500).json({
+        error: "Une erreur est survenue lors de la suppression du groupage.",
+      });
+    }
+  }
+};
+
+module.exports = { createGroupage, getAllGroupagesWithDetails, deleteGroupage };
