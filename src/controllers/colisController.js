@@ -150,7 +150,23 @@ const removeParcelFromMasterPack = async (req, res) => {
 
 const updateParcelInMasterPack = async (req, res) => {
   const { masterPackId, colisId } = req.params;
-  const { poids_colis, code } = req.body; // Exemples de champs modifiables
+
+  console.log(colisId);
+  console.log(masterPackId);
+
+  const {
+    code,
+    nom_complet,
+    status,
+    tracking_code,
+    telephone,
+    poids_colis,
+    transportType,
+    airType,
+    itemType,
+    clientAvecCodeId,
+  } = req.body; // Tous les champs modifiables
+
   console.log(masterPackId, colisId, req.body);
 
   try {
@@ -173,8 +189,16 @@ const updateParcelInMasterPack = async (req, res) => {
     const updatedColis = await prisma.colis.update({
       where: { id: parseInt(colisId) },
       data: {
-        poids_colis,
         code,
+        nom_complet,
+        status,
+        tracking_code,
+        telephone,
+        poids_colis,
+        transportType,
+        airType,
+        itemType,
+        clientAvecCodeId,
       },
     });
 

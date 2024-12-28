@@ -120,10 +120,21 @@ const getAllGroupagesWithDetails = async (req, res) => {
             colis: true,
           },
         },
+        _count: {
+          select: {
+            colis: true, // Compter le nombre de colis associés à chaque groupage
+          },
+        },
       },
     });
 
-    res.status(200).json(groupages);
+    // Ajouter le nombre de colis à chaque groupage
+    const groupagesWithColisCount = groupages.map((groupage) => ({
+      ...groupage,
+      colisCount: groupage._count.colis, // Ajouter le nombre de colis
+    }));
+
+    res.status(200).json(groupagesWithColisCount);
   } catch (error) {
     console.error("Error fetching groupages:", error);
     res
