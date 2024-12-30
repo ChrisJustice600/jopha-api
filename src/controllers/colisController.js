@@ -221,7 +221,7 @@ const addParcelInGroupage = async (req, res) => {
     // Récupérer le groupage et ses master packs associés
     const groupage = await prisma.groupage.findUnique({
       where: { code: code },
-      include: { masterPacks: true },
+      include: { masterPacks: true, colis: true }, // Inclure les colis associés
     });
 
     if (!groupage) {
@@ -249,6 +249,18 @@ const addParcelInGroupage = async (req, res) => {
         .json({ error: "Aucun master pack trouvé pour ce groupage." });
     }
 
+    // Générer un code à 4 chiffres unique pour le colis
+    const generateUniqueCode = () => {
+      const randomCode = Math.floor(1000 + Math.random() * 9000).toString(); // Génère un code à 4 chiffres
+      const isUnique = !groupage.colis.some((colis) =>
+        colis.code?.endsWith(randomCode)
+      );
+      return isUnique ? randomCode : generateUniqueCode(); // Vérifie l'unicité et recommence si nécessaire
+    };
+
+    const uniqueCode = generateUniqueCode();
+    const colisCode = `${code}-${uniqueCode}`; // Combiner le code du groupage et le code unique
+
     // Ajouter le colis au master pack trouvé
     const colis = await prisma.colis.update({
       where: { id: colisData.id },
@@ -257,7 +269,7 @@ const addParcelInGroupage = async (req, res) => {
         telephone: colisData.telephone || "0000000000",
         masterPack: { connect: { id: masterPack.id } }, // Associer au master pack trouvé
         groupage: { connect: { id: groupage.id } }, // Associer au groupage
-        code: colisData.code || null,
+        code: colisCode, // Utiliser le code généré
         status: "GROUPED",
         poids_colis: colisData.poids_colis || null,
         transportType: colisData.transportType || null,

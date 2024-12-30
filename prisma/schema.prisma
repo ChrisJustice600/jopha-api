@@ -29,10 +29,9 @@ model Groupage {
   airType       AirTransport?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
-  colis         Colis[]        @relation("GroupageColis", onDelete: Cascade)
-  masterPacks   MasterPack[]   @relation("GroupageMasterPacks", onDelete: Cascade)
-  notes         Note[]         @relation("GroupageNotes") // Supprimez onDelete: Cascade ici
-  Note          Note[]
+  colis         Colis[]        @relation("GroupageColis")
+  masterPacks   MasterPack[]   @relation("GroupageMasterPacks")
+  notes         Note[]
 
   @@index([code])
   @@index([status])
@@ -93,18 +92,16 @@ model ClientAvecCode {
 }
 
 model Note {
-  id         Int      @id @default(autoincrement())
+  id         Int       @id @default(autoincrement())
   contenu    String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
   userId     Int
   colisId    Int?
   groupageId Int?
-  colis      Colis?   @relation(fields: [colisId], references: [id])
-  user       User     @relation(fields: [userId], references: [id])
-
-  Groupage Groupage? @relation(fields: [groupageId], references: [id])
-  Groupage Groupage? @relation(fields: [groupageId], references: [id])
+  colis      Colis?    @relation(fields: [colisId], references: [id])
+  groupage   Groupage? @relation(fields: [groupageId], references: [id])
+  user       User      @relation(fields: [userId], references: [id])
 }
 
 enum Role {
