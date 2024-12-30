@@ -34,6 +34,10 @@ authRouter.post(
   colisController.createNewMasterPackInGroupage
 );
 authRouter.post("/addParcelInGroupage/", colisController.addParcelInGroupage);
+authRouter.post(
+  "/addParcelToSpecificMasterPack/",
+  colisController.addParcelToSpecificMasterPack
+);
 
 // GET PARCEL/COLIS BY GROUPAGE
 authRouter.post("/getParcelByGroupage/", colisController.getParcelByGroupage);

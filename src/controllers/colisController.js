@@ -284,6 +284,64 @@ const addParcelInGroupage = async (req, res) => {
   }
 };
 
+const addParcelToSpecificMasterPack = async (req, res) => {
+  const { masterPackNumero, colisData } = req.body;
+  console.log("masterPackNumero:", masterPackNumero);
+  console.log("colisData:", colisData);
+
+  try {
+    // Récupérer le MasterPack spécifique par son numéro
+    const masterPack = await prisma.masterPack.findUnique({
+      where: { numero: masterPackNumero },
+      include: { groupage: true }, // Inclure le groupage associé
+    });
+
+    if (!masterPack) {
+      return res.status(404).json({ error: "MasterPack non trouvé" });
+    }
+
+    // Vérifier si le MasterPack appartient à un groupage
+    if (!masterPack.groupage) {
+      return res
+        .status(400)
+        .json({ error: "Ce MasterPack n'appartient à aucun groupage." });
+    }
+
+    // Générer un code à 4 chiffres unique pour le colis
+    const generateUniqueCode = () => {
+      const randomCode = Math.floor(1000 + Math.random() * 9000).toString(); // Génère un code à 4 chiffres
+      const isUnique = !masterPack.colis.some((colis) =>
+        colis.code?.endsWith(randomCode)
+      );
+      return isUnique ? randomCode : generateUniqueCode(); // Vérifie l'unicité et recommence si nécessaire
+    };
+
+    const uniqueCode = generateUniqueCode();
+    const colisCode = `${masterPack.groupage.code}-${uniqueCode}`; // Combiner le code du groupage et le code unique
+
+    // Ajouter le colis au MasterPack spécifique
+    const colis = await prisma.colis.update({
+      where: { id: colisData.id },
+      data: {
+        nom_complet: colisData.nom_complet || "Nom par défaut",
+        telephone: colisData.telephone || "0000000000",
+        masterPack: { connect: { id: masterPack.id } }, // Associer au MasterPack spécifique
+        groupage: { connect: { id: masterPack.groupage.id } }, // Associer au groupage
+        code: colisCode, // Utiliser le code généré
+        status: "GROUPED",
+        poids_colis: colisData.poids_colis || null,
+        transportType: colisData.transportType || null,
+        airType: colisData.airType || null,
+      },
+    });
+
+    return res.status(201).json(colis);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Erreur lors de l'ajout du colis" });
+  }
+};
+
 const getParcelByGroupage = async (req, res) => {
   const { groupageId } = req.params;
 
@@ -582,4 +640,5 @@ module.exports = {
   removeParcelFromMasterPack,
   updateParcelInMasterPack,
   createNewMasterPackInGroupage,
+  addParcelToSpecificMasterPack,
 };
