@@ -135,6 +135,7 @@ const removeParcelFromMasterPack = async (req, res) => {
       where: { id: parseInt(colisId) },
       data: {
         masterPackId: null, // Suppression de l'association
+        status: "RECEIVED", // Mise à jour du status
       },
     });
 
@@ -184,7 +185,7 @@ const updateParcelInMasterPack = async (req, res) => {
         error: "Le colis n'est pas associé à ce MasterPack",
       });
     }
-
+    const status = "RECEIVED";
     // Mise à jour des données du colis
     const updatedColis = await prisma.colis.update({
       where: { id: parseInt(colisId) },
