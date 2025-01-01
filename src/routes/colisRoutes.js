@@ -14,6 +14,7 @@ const userAndAdmin = checkUserRole(["USER", "ADMIN"]); // ça marche
 
 authRouter.post("/register", colisController.createColis);
 authRouter.get("/getParcelById/:id", colisController.getParcelById);
+authRouter.delete("/deleteMasterPack", colisController.deleteMasterPack);
 // authRouter.post(
 //   "/registercolisMasterPack",
 //   userAndAdmin,

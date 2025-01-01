@@ -12,6 +12,7 @@ const createColis = async (req, res) => {
     // clientAvecCode,
     itemType,
   } = req.body;
+  console.log(req.body);
 
   try {
     // **Création du colis avec validations des champs optionnels**
@@ -403,6 +404,84 @@ const getColisByMasterPack = async (req, res) => {
   }
 };
 
+const deleteMasterPack = async (req, res) => {
+  const { code, numero } = req.body;
+
+  try {
+    // Trouver le Groupage par son code
+    const groupage = await prisma.groupage.findUnique({
+      where: { code: code },
+      include: { masterPacks: true },
+    });
+
+    if (!groupage) {
+      return res.status(404).json({
+        success: false,
+        message: "Groupage non trouvé.",
+      });
+    }
+
+    // Trouver le MasterPack dans le Groupage par son numéro
+    const masterPack = groupage.masterPacks.find((mp) => mp.numero === numero);
+
+    if (!masterPack) {
+      return res.status(404).json({
+        success: false,
+        message: "MasterPack non trouvé dans ce Groupage.",
+      });
+    }
+
+    // Supprimer le MasterPack
+    await prisma.masterPack.delete({
+      where: { id: masterPack.id }, // Utiliser l'ID pour supprimer
+    });
+
+    // Récupérer tous les MasterPacks restants associés au Groupage
+    const remainingMasterPacks = await prisma.masterPack.findMany({
+      where: { groupageId: groupage.id }, // Utiliser groupageId pour filtrer
+    });
+
+    // Vérifier si les numéros sont séquentiels
+    let needsReorganization = false;
+    for (let i = 0; i < remainingMasterPacks.length; i++) {
+      const expectedNumber = `MP#${String(i + 1).padStart(2, "0")}`;
+      if (remainingMasterPacks[i].numero !== expectedNumber) {
+        needsReorganization = true;
+        break;
+      }
+    }
+
+    // Réorganiser les numéros si nécessaire
+    if (needsReorganization) {
+      for (let i = 0; i < remainingMasterPacks.length; i++) {
+        const newNumber = `MP#${String(i + 1).padStart(2, "0")}`;
+        await prisma.masterPack.update({
+          where: { id: remainingMasterPacks[i].id },
+          data: { numero: newNumber },
+        });
+      }
+    }
+
+    // Répondre avec un succès
+    res.status(200).json({
+      success: true,
+      message: `MasterPack avec le numéro ${numero} dans le Groupage ${code} a été supprimé avec succès.`,
+      reorganized: needsReorganization,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la suppression du MasterPack:", error);
+
+    // Répondre avec une erreur
+    res.status(500).json({
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Une erreur est survenue lors de la suppression du MasterPack.",
+    });
+  }
+};
+
 const getMasterPacksByGroupage = async (req, res) => {
   const { code } = req.params;
 
@@ -642,4 +721,5 @@ module.exports = {
   updateParcelInMasterPack,
   createNewMasterPackInGroupage,
   addParcelToSpecificMasterPack,
+  deleteMasterPack,
 };
