@@ -215,9 +215,10 @@ const updateParcelInMasterPack = async (req, res) => {
 };
 
 const addParcelInGroupage = async (req, res) => {
-  const { code, colisData } = req.body;
+  const { code, colisData, masterPackNumber } = req.body; // Récupérer masterPackNumber
   console.log("code:", code);
   console.log("colisData:", colisData);
+  console.log("masterPackNumber:", masterPackNumber); // Log du numéro de master pack
 
   try {
     // Récupérer le groupage et ses master packs associés
@@ -237,26 +238,28 @@ const addParcelInGroupage = async (req, res) => {
       masterPack = groupage.masterPacks[0];
       console.log("Un seul master pack trouvé :", masterPack.numero);
     } else if (groupage.masterPacks.length > 1) {
-      // Cas où il y a plusieurs master packs : trouver le dernier basé sur le numéro
-      masterPack = groupage.masterPacks.reduce((prev, curr) => {
-        const prevNum = parseInt(prev.numero?.replace(/^\D+/g, "") || "0", 10);
-        const currNum = parseInt(curr.numero?.replace(/^\D+/g, "") || "0", 10);
-        return currNum > prevNum ? curr : prev;
-      });
-      console.log("Dernier master pack trouvé :", masterPack.numero);
+      // Cas où il y a plusieurs master packs : utiliser le masterPackNumber passé dans le body
+      if (!masterPackNumber) {
+        return res.status(400).json({ error: "Numéro de master pack requis pour ce groupage." });
+      }
+
+      // Trouver le master pack correspondant au numéro fourni
+      masterPack = groupage.masterPacks.find((mp) => mp.numero === masterPackNumber);
+
+      if (!masterPack) {
+        return res.status(404).json({ error: `Master pack avec le numéro ${masterPackNumber} non trouvé.` });
+      }
+
+      console.log("Master pack sélectionné :", masterPack.numero);
     } else {
-      // Cas où aucun master pack n'est associé (non spécifié dans votre scénario)
-      return res
-        .status(400)
-        .json({ error: "Aucun master pack trouvé pour ce groupage." });
+      // Cas où aucun master pack n'est associé
+      return res.status(400).json({ error: "Aucun master pack trouvé pour ce groupage." });
     }
 
     // Générer un code à 4 chiffres unique pour le colis
     const generateUniqueCode = () => {
       const randomCode = Math.floor(1000 + Math.random() * 9000).toString(); // Génère un code à 4 chiffres
-      const isUnique = !groupage.colis.some((colis) =>
-        colis.code?.endsWith(randomCode)
-      );
+      const isUnique = !groupage.colis.some((colis) => colis.code?.endsWith(randomCode));
       return isUnique ? randomCode : generateUniqueCode(); // Vérifie l'unicité et recommence si nécessaire
     };
 
@@ -285,7 +288,6 @@ const addParcelInGroupage = async (req, res) => {
     return res.status(500).json({ error: "Erreur lors de l'ajout du colis" });
   }
 };
-
 const addParcelToSpecificMasterPack = async (req, res) => {
   const { masterPackNumero, colisData } = req.body;
   console.log("masterPackNumero:", masterPackNumero);
