@@ -81,6 +81,7 @@ model MasterPack {
   numero      String?  @unique
   poids_colis String?
   groupageId  Int
+  status      Status   @default(GROUPED)
   colis       Colis[]  @relation("MasterPackColis")
   groupage    Groupage @relation("GroupageMasterPacks", fields: [groupageId], references: [id])
 
