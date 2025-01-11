@@ -8,16 +8,52 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  username  String
-  email     String   @unique
-  password  String
-  role      Role     @default(USER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            Int       @id @default(autoincrement())
+  username      String
+  email         String    @unique
+  password      String
+  resetToken    String? // Ajoutez ce champ
+  resetTokenExp DateTime? // Ajoutez ce champ
+  role          Role      @default(USER)
+
+  logs      UserLog[]
+  sessions  Session[] // Ajout de la relation avec les sessions
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   notes     Note[]
 
   @@index([email])
+}
+
+model Session {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  status    String   @default("ACTIVE") // ACTIVE, INACTIVE, SUSPENDED
+}
+
+model UserLog {
+  id             Int      @id @default(autoincrement())
+  userId         Int
+  user           User     @relation(fields: [userId], references: [id])
+  action         String
+  ipAddress      String?
+  userAgent      String?
+  browser        String?
+  browserVersion String?
+  os             String?
+  osVersion      String?
+  device         String? // Type d'appareil (mobile, tablet, desktop)
+  deviceModel    String? // Modèle spécifique de l'appareil
+  deviceBrand    String? // Marque de l'appareil
+  timestamp      DateTime @default(now())
+  status         String
+  details        String?
 }
 
 model Groupage {
