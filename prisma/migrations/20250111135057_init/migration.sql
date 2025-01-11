@@ -19,11 +19,48 @@ CREATE TABLE "User" (
     "username" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "password" TEXT NOT NULL,
+    "resetToken" TEXT,
+    "resetTokenExp" TIMESTAMP(3),
     "role" "Role" NOT NULL DEFAULT 'USER',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Session" (
+    "id" SERIAL NOT NULL,
+    "userId" INTEGER NOT NULL,
+    "token" TEXT NOT NULL,
+    "ipAddress" TEXT,
+    "userAgent" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+
+    CONSTRAINT "Session_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "UserLog" (
+    "id" SERIAL NOT NULL,
+    "userId" INTEGER NOT NULL,
+    "action" TEXT NOT NULL,
+    "ipAddress" TEXT,
+    "userAgent" TEXT,
+    "browser" TEXT,
+    "browserVersion" TEXT,
+    "os" TEXT,
+    "osVersion" TEXT,
+    "device" TEXT,
+    "deviceModel" TEXT,
+    "deviceBrand" TEXT,
+    "timestamp" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "status" TEXT NOT NULL,
+    "details" TEXT,
+
+    CONSTRAINT "UserLog_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -46,6 +83,7 @@ CREATE TABLE "MasterPack" (
     "numero" TEXT,
     "poids_colis" TEXT,
     "groupageId" INTEGER NOT NULL,
+    "status" "Status" NOT NULL DEFAULT 'GROUPED',
 
     CONSTRAINT "MasterPack_pkey" PRIMARY KEY ("id")
 );
@@ -101,6 +139,9 @@ CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 CREATE INDEX "User_email_idx" ON "User"("email");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Session_token_key" ON "Session"("token");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Groupage_code_key" ON "Groupage"("code");
 
 -- CreateIndex
@@ -117,6 +158,9 @@ CREATE INDEX "Groupage_airType_idx" ON "Groupage"("airType");
 
 -- CreateIndex
 CREATE INDEX "Groupage_createdAt_idx" ON "Groupage"("createdAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "MasterPack_numero_key" ON "MasterPack"("numero");
 
 -- CreateIndex
 CREATE INDEX "MasterPack_numero_idx" ON "MasterPack"("numero");
@@ -150,6 +194,12 @@ CREATE UNIQUE INDEX "ClientAvecCode_code_key" ON "ClientAvecCode"("code");
 
 -- CreateIndex
 CREATE INDEX "ClientAvecCode_createdAt_idx" ON "ClientAvecCode"("createdAt");
+
+-- AddForeignKey
+ALTER TABLE "Session" ADD CONSTRAINT "Session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "UserLog" ADD CONSTRAINT "UserLog_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "MasterPack" ADD CONSTRAINT "MasterPack_groupageId_fkey" FOREIGN KEY ("groupageId") REFERENCES "Groupage"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

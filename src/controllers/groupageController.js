@@ -17,6 +17,7 @@ const createGroupage = async (req, res) => {
             {
               numero: "MP#01",
               poids_colis: "0.00",
+              status: "GROUPED",
             },
           ],
         },

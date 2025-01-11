@@ -240,26 +240,38 @@ const addParcelInGroupage = async (req, res) => {
     } else if (groupage.masterPacks.length > 1) {
       // Cas où il y a plusieurs master packs : utiliser le masterPackNumber passé dans le body
       if (!masterPackNumber) {
-        return res.status(400).json({ error: "Numéro de master pack requis pour ce groupage." });
+        return res
+          .status(400)
+          .json({ error: "Numéro de master pack requis pour ce groupage." });
       }
 
       // Trouver le master pack correspondant au numéro fourni
-      masterPack = groupage.masterPacks.find((mp) => mp.numero === masterPackNumber);
+      masterPack = groupage.masterPacks.find(
+        (mp) => mp.numero === masterPackNumber
+      );
 
       if (!masterPack) {
-        return res.status(404).json({ error: `Master pack avec le numéro ${masterPackNumber} non trouvé.` });
+        return res
+          .status(404)
+          .json({
+            error: `Master pack avec le numéro ${masterPackNumber} non trouvé.`,
+          });
       }
 
       console.log("Master pack sélectionné :", masterPack.numero);
     } else {
       // Cas où aucun master pack n'est associé
-      return res.status(400).json({ error: "Aucun master pack trouvé pour ce groupage." });
+      return res
+        .status(400)
+        .json({ error: "Aucun master pack trouvé pour ce groupage." });
     }
 
     // Générer un code à 4 chiffres unique pour le colis
     const generateUniqueCode = () => {
       const randomCode = Math.floor(1000 + Math.random() * 9000).toString(); // Génère un code à 4 chiffres
-      const isUnique = !groupage.colis.some((colis) => colis.code?.endsWith(randomCode));
+      const isUnique = !groupage.colis.some((colis) =>
+        colis.code?.endsWith(randomCode)
+      );
       return isUnique ? randomCode : generateUniqueCode(); // Vérifie l'unicité et recommence si nécessaire
     };
 
@@ -597,6 +609,7 @@ const createNewMasterPackInGroupage = async (req, res) => {
         numero: nextNumero,
         poids_colis: "0", // Valeur par défaut ou à définir selon tes besoins
         groupageId: groupage.id, // Utiliser l'ID du groupage trouvé
+        status: "GROUPED",
       },
     });
 
