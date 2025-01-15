@@ -111,4 +111,120 @@ const signin = async (req, res) => {
   }
 };
 
-module.exports = { register, signin };
+// Fonction principale
+async function forgotPassword(req, res) {
+  const { email } = req.body;
+  console.log(email);
+
+  // Vérification des paramètres requis
+  if (!email) {
+    return res.status(400).json({ error: "Email requis." });
+  }
+
+  try {
+    // Recherche de l'utilisateur
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return res.status(404).json({ error: "Utilisateur introuvable." });
+    }
+
+    // Génération du token JWT pour la réinitialisation
+    const token = generateToken(user);
+
+    // Mise à jour du token et de son expiration dans la base de données
+    const testuser = await prisma.user.update({
+      where: { email },
+      data: {
+        resetToken: token,
+        resetTokenExp: new Date(Date.now() + 3600000), // Expiration dans 1 heure
+      },
+    });
+    console.log(testuser);
+
+    // Création du lien de réinitialisation
+    const resetLink = `${process.env.FRONTEND_URL_LOCAL}/new-password?token=${token}`;
+
+    // Envoi de l'e-mail
+    await sendResetEmail(email, resetLink);
+
+    // Réponse au client
+    res.status(200).json({
+      message: "Email de réinitialisation envoyé avec succès.",
+      email,
+    });
+  } catch (err) {
+    console.error("Erreur dans la fonction forgotPassword : ", err.message);
+
+    // Réponse en cas d'erreur interne
+    res.status(500).json({
+      error: "Une erreur est survenue lors du traitement de la demande.",
+    });
+  }
+}
+
+async function resetPassword(req, res) {
+  const { token, newPassword } = req.body;
+
+  // Validate request body
+  if (!token || !newPassword) {
+    return res.status(400).json({ error: "Données manquantes." });
+  }
+
+  try {
+    // Verify token
+    const decoded = verifyToken(token);
+
+    // Find user by id and resetToken
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id },
+    });
+
+    // Check if user exists and token is valid
+    if (!user) {
+      return res
+        .status(400)
+        .json({ error: "Token invalide ou utilisateur introuvable." });
+    }
+
+    if (user.resetToken !== token) {
+      return res.status(400).json({ error: "Token invalide." });
+    }
+
+    if (user.resetTokenExp < new Date()) {
+      return res.status(400).json({ error: "Token expiré." });
+    }
+
+    // Hash new password
+    const hashedPassword = await hashPassword(newPassword);
+    // console.log("auth:", user);
+
+    // Update user password and reset token fields
+    const userInfoUpdated = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        resetToken: null,
+        resetTokenExp: null,
+      },
+    });
+    console.log(userInfoUpdated);
+    // Envoyer un e-mail de confirmation
+    // console.log(user.email);
+
+    await sendPasswordChangedEmail(user.email);
+
+    // Send success response
+    res.status(200).json({
+      message: "Mot de passe mis à jour avec succès.",
+      userInfoUpdated,
+    });
+  } catch (err) {
+    if (err.name === "JsonWebTokenError" || err.name === "TokenExpiredError") {
+      return res.status(400).json({ error: "Token invalide ou expiré." });
+    }
+    console.error("Erreur lors du reset du mot de passe:", err);
+    res.status(500).json({ error: "Erreur serveur." });
+  }
+}
+
+module.exports = { register, signin, resetPassword, forgotPassword };
