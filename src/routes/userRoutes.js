@@ -1,13 +1,13 @@
 const { Router } = require("express");
-const authController = require("../controllers/authController");
+const userController = require("../controllers/userController");
 
-const authRouter = Router();
+const userRouter = Router();
 
-authRouter.post("/register", authController.register);
+userRouter.get("/getAll", userController.getAllUsers);
 
 // authRouter.post(`/signup/:adminRouteParams`, signup);
 
 // authRouter.post("/signin", authController.signin);
 // authRouter.post("/logout", logout);
 
-module.exports = authRouter;
+module.exports = userRouter;

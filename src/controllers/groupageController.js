@@ -2,6 +2,7 @@ const { prisma } = require("../../database/prisma");
 
 const createGroupage = async (req, res) => {
   const { code, poids_colis, transportType, airType } = req.body; // Destructure data from request body
+  console.log(code, poids_colis, transportType, airType);
 
   try {
     // Create a new groupage using Prisma
@@ -26,6 +27,9 @@ const createGroupage = async (req, res) => {
         masterPacks: true, // Include masterPacks in the response
       },
     });
+
+    console.log(groupage);
+
     res.status(201).json(groupage); // Send back the created groupage object
   } catch (error) {
     // Check if the error is a unique constraint violation

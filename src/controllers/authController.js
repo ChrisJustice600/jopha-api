@@ -1,27 +1,29 @@
-// const { comparePassword } = require("../../bcryptConfigconfig/bcryptConfig");
 const { generateToken } = require("../../config/jwtconfig");
-const { prisma, findUserByEmail } = require("../../database/prisma");
+const { prisma } = require("../../database/prisma");
 const bcrypt = require("bcrypt");
-const config = require("../../config/environment");
 
 const register = async (req, res) => {
   try {
-    const { email, password, username } = req.body;
+    const { username, email, password, role } = req.body;
+    console.log("username: ", username);
+    console.log("email: ", email);
+    console.log("password: ", password);
+    console.log("Role: ", role);
 
-    // Regex pour valider le format de l'email
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    // // Regex pour valider le format de l'email
+    // const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
-    // Basic validation
-    if (!email || !password) {
-      return res.status(400).json({ error: "Champs obligatoires manquants" });
-    }
+    // // Validation de base
+    // if (!email || !password || !username) {
+    //   return res.status(400).json({ error: "Champs obligatoires manquants" });
+    // }
 
-    // Vérification du format de l'email
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ error: "Adresse email invalide" });
-    }
+    // // Vérification du format de l'email
+    // if (!emailRegex.test(email)) {
+    //   return res.status(400).json({ error: "Adresse email invalide" });
+    // }
 
-    // Check if user already exists
+    // Vérifier si l'utilisateur existe déjà
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
@@ -30,50 +32,86 @@ const register = async (req, res) => {
       return res.status(400).json({ error: "Cet email est déjà utilisé" });
     }
 
+    // Hacher le mot de passe
     const salt = bcrypt.genSaltSync(10);
     const passwordHash = bcrypt.hashSync(password, salt);
 
+    // Créer l'utilisateur dans la base de données
     const user = await prisma.user.create({
       data: {
         email,
-        password: passwordHash,
         username,
-        role: "USER",
+        password: passwordHash,
+        role,
       },
     });
+    console.log("user", user);
 
-    res.status(201).json({ user });
+    // Retourner la réponse avec le token et les informations de l'utilisateur
+    res.status(201).json({
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
+    });
   } catch (error) {
     console.error("Erreur lors de la création de l'utilisateur:", error);
     res.status(500).json({ error: "Erreur interne du serveur" });
   }
 };
 
-async function signin(req, res) {
+const signin = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const user = await findUserByEmail(email);
-    console.log(user);
+    const { identifier, password } = req.body; // `identifier` peut être soit un email, soit un username
+
+    // Vérifier si l'utilisateur existe avec l'email ou le username
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: identifier }, // Recherche par email
+          { username: identifier }, // Recherche par username
+        ],
+      },
+    });
+
+    // Si l'utilisateur n'existe pas
     if (!user) {
-      return res.status(401).json({ message: "Invalid email or password" });
+      return res
+        .status(400)
+        .json({ error: "Identifiant ou mot de passe incorrect" });
     }
+
+    // Vérifier le mot de passe
     const isPasswordValid = bcrypt.compareSync(password, user.password);
-
     if (!isPasswordValid) {
-      return res.status(401).json({ message: "Invalid email or password" });
+      return res
+        .status(400)
+        .json({ error: "Identifiant ou mot de passe incorrect" });
     }
 
-    const token = generateToken(user);
-    console.log();
-
-    res.cookie("token", token).json({
-      username: user.username,
+    // Générer un token JWT
+    const token = generateToken({
+      id: user.id,
       email: user.email,
       role: user.role,
     });
+
+    // Retourner la réponse avec le token et les informations de l'utilisateur
+    res.status(200).json({
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
+      token,
+    });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: error });
+    console.error("Erreur lors de la connexion:", error);
+    res.status(500).json({ error: "Erreur interne du serveur" });
   }
-}
+};
+
 module.exports = { register, signin };
