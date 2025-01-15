@@ -64,19 +64,15 @@ const register = async (req, res) => {
 
 const signin = async (req, res) => {
   try {
-    const { identifier, password } = req.body; // `identifier` peut être soit un email, soit un username
+    const { identifier, password } = req.body;
 
     // Vérifier si l'utilisateur existe avec l'email ou le username
     const user = await prisma.user.findFirst({
       where: {
-        OR: [
-          { email: identifier }, // Recherche par email
-          { username: identifier }, // Recherche par username
-        ],
+        OR: [{ email: identifier }, { username: identifier }],
       },
     });
 
-    // Si l'utilisateur n'existe pas
     if (!user) {
       return res
         .status(400)
@@ -92,32 +88,23 @@ const signin = async (req, res) => {
     }
 
     // Générer un token JWT
-    const token = generateToken({
-      id: user.id,
-      email: user.email,
-      role: user.role,
-    });
+    const token = generateToken(user);
 
-    // Retourner la réponse avec le token et les informations de l'utilisateur
-    // res.status(200).json({
-    //   user: {
-    //     id: user.id,
-    //     username: user.username,
-    //     email: user.email,
-    //     role: user.role,
-    //   },
-    //   token,
-    // });
-
-    // Envoi du token dans un cookie et des informations de l'utilisateur en réponse
-    res.cookie("token", token, { httpOnly: true }).json({
-      user: {
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        token: token,
-      },
-    });
+    // Envoyer le cookie avec des options sécurisées
+    res
+      .cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production", // HTTPS en production
+        sameSite: "strict",
+        maxAge: 3600000, // 1 heure
+      })
+      .json({
+        user: {
+          username: user.username,
+          email: user.email,
+          role: user.role,
+        },
+      });
   } catch (error) {
     console.error("Erreur lors de la connexion:", error);
     res.status(500).json({ error: "Erreur interne du serveur" });

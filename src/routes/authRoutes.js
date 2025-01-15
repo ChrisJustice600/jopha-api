@@ -4,6 +4,7 @@ const authController = require("../controllers/authController");
 const authRouter = Router();
 
 authRouter.post("/register", authController.register);
+authRouter.post("/signin", authController.signin);
 
 // authRouter.post(`/signup/:adminRouteParams`, signup);
 

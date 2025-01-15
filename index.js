@@ -14,22 +14,41 @@ const app = express();
 app.use(helmet());
 
 app.use(
-  cors({
-    origin: "*",
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-    credentials: true,
-    optionsSuccessStatus: 204,
-  })
-);
-
-app.use(cookieParser());
-
-app.use(
   express.urlencoded({
     extended: true,
   })
 );
 app.use(express.json());
+
+const allowedOrigins = [
+  "https://esu-app-test-pi.vercel.app",
+  "http://localhost:3000",
+  "https://www.optsolution.cd",
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "Accept",
+    "Origin",
+  ],
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+
+// Middleware pour parser les cookies
+app.use(cookieParser());
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
