@@ -99,14 +99,24 @@ const signin = async (req, res) => {
     });
 
     // Retourner la réponse avec le token et les informations de l'utilisateur
-    res.status(200).json({
+    // res.status(200).json({
+    //   user: {
+    //     id: user.id,
+    //     username: user.username,
+    //     email: user.email,
+    //     role: user.role,
+    //   },
+    //   token,
+    // });
+
+    // Envoi du token dans un cookie et des informations de l'utilisateur en réponse
+    res.cookie("token", token, { httpOnly: true }).json({
       user: {
-        id: user.id,
         username: user.username,
         email: user.email,
         role: user.role,
+        token: token,
       },
-      token,
     });
   } catch (error) {
     console.error("Erreur lors de la connexion:", error);
