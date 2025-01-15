@@ -1,15 +1,14 @@
 const { prisma } = require("../../database/prisma");
 
 const createGroupage = async (req, res) => {
-  const { code, poids_colis, transportType, airType } = req.body; // Destructure data from request body
-  console.log(code, poids_colis, transportType, airType);
+  const { code, transportType, airType } = req.body; // Destructure data from request body
+  console.log(code, transportType, airType);
 
   try {
     // Create a new groupage using Prisma
     const groupage = await prisma.groupage.create({
       data: {
         code, // Mandatory field
-        poids_colis, // Optional field
         transportType, // Optional field
         airType: airType || null, // Optional field
         status: "GROUPED", // Default value as per the schema

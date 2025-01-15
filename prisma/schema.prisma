@@ -78,7 +78,7 @@ model Groupage {
 
 model MasterPack {
   id          Int      @id @default(autoincrement())
-  numero      String?  @unique
+  numero      String?
   poids_colis String?
   groupageId  Int
   status      Status   @default(GROUPED)
