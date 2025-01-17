@@ -1,14 +1,15 @@
 const { generateToken } = require("../../config/jwtconfig");
+const {
+  sendAccountCreatedEmail,
+  sendResetEmail,
+  sendPasswordChangedEmail,
+} = require("../../config/nodeMailer");
 const { prisma } = require("../../database/prisma");
 const bcrypt = require("bcrypt");
 
 const register = async (req, res) => {
   try {
     const { username, email, password, role } = req.body;
-    console.log("username: ", username);
-    console.log("email: ", email);
-    console.log("password: ", password);
-    console.log("Role: ", role);
 
     // // Regex pour valider le format de l'email
     // const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -45,7 +46,14 @@ const register = async (req, res) => {
         role,
       },
     });
-    console.log("user", user);
+    // console.log("user", user);
+
+    try {
+      await sendAccountCreatedEmail(email, password);
+      console.log("E-mail de bienvenue envoyé avec succès chez " + email);
+    } catch (error) {
+      console.error("Erreur lors de l'envoi de l'e-mail de bienvenue :", error);
+    }
 
     // Retourner la réponse avec le token et les informations de l'utilisateur
     res.status(201).json({

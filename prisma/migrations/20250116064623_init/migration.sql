@@ -160,9 +160,6 @@ CREATE INDEX "Groupage_airType_idx" ON "Groupage"("airType");
 CREATE INDEX "Groupage_createdAt_idx" ON "Groupage"("createdAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "MasterPack_numero_key" ON "MasterPack"("numero");
-
--- CreateIndex
 CREATE INDEX "MasterPack_numero_idx" ON "MasterPack"("numero");
 
 -- CreateIndex
