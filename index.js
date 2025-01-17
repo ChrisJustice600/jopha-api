@@ -21,9 +21,8 @@ app.use(
 app.use(express.json());
 
 const allowedOrigins = [
-  "https://esu-app-test-pi.vercel.app",
+  "https://jopha-front.vercel.app",
   "http://localhost:3000",
-  "https://www.optsolution.cd",
 ];
 
 const corsOptions = {
