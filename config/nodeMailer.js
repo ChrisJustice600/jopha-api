@@ -238,7 +238,7 @@ const sendAccountCreatedEmail = async (email, password) => {
   <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
-      <title>Bienvenue sur Jopha Management</title>
+      <title>Bienvenue</title>
       <style>
           body {
               font-family: 'Arial', sans-serif;
