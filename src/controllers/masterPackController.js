@@ -14,11 +14,14 @@ const updateMasterPackStatus = async (req, res) => {
     }
 
     // Vérifier si le MasterPack existe et appartient au groupage
-    const masterPack = await prisma.masterPack.findUnique({
-      where: { numero },
+    const masterPack = await prisma.masterPack.findFirst({
+      where: {
+        numero: numero,
+        groupageId: groupage.id, // Vérifiez également que le MasterPack appartient au groupage
+      },
     });
 
-    if (!masterPack || masterPack.groupageId !== groupage.id) {
+    if (!masterPack) {
       return res.status(404).json({
         error: "MasterPack non trouvé ou n'appartient pas au groupage",
       });
@@ -26,7 +29,7 @@ const updateMasterPackStatus = async (req, res) => {
 
     // Mettre à jour le statut du MasterPack
     const updatedMasterPack = await prisma.masterPack.update({
-      where: { numero },
+      where: { id: masterPack.id }, // Utilisez l'id pour la mise à jour
       data: { status },
     });
 
