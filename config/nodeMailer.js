@@ -238,7 +238,7 @@ const sendAccountCreatedEmail = async (email, password) => {
   <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
-      <title>Bienvenue sur OptSolution</title>
+      <title>Bienvenue sur Jopha Management</title>
       <style>
           body {
               font-family: 'Arial', sans-serif;
@@ -340,7 +340,7 @@ const sendAccountCreatedEmail = async (email, password) => {
               <ul>
                   <li><strong>Email de connexion :</strong> ${email}</li>
                   <li><strong>Mot de passe par défaut :</strong> ${password}</li>
-                  <li><strong>Connectez-vous :</strong> <a href="https://www.optsolution.cd/" style="color: #1e90ff; text-decoration: underline;">OptSolution</a></li>
+                  <li><strong>Connectez-vous :</strong> <a href="https://jopha-front.vercel.app/" style="color: #1e90ff; text-decoration: underline;">OptSolution</a></li>
               </ul>
               <p>Si vous avez des questions ou besoin d'aide, n'hésitez pas à nous contacter.</p>
               <p>À très bientôt,<br>L'équipe Jopha support</p>
