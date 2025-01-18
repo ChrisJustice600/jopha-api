@@ -27,19 +27,30 @@ const updateMasterPackStatus = async (req, res) => {
       });
     }
 
-    // Mettre à jour le statut du MasterPack
-    const updatedMasterPack = await prisma.masterPack.update({
-      where: { id: masterPack.id }, // Utilisez l'id pour la mise à jour
-      data: { status },
-    });
+    // Utiliser une transaction pour mettre à jour le MasterPack et les colis associés
+    const [updatedMasterPack, updatedColis] = await prisma.$transaction([
+      // Mettre à jour le statut du MasterPack
+      prisma.masterPack.update({
+        where: { id: masterPack.id },
+        data: { status },
+      }),
+
+      // Mettre à jour le statut de tous les colis associés au MasterPack
+      prisma.colis.updateMany({
+        where: { masterPackId: masterPack.id },
+        data: { status },
+      }),
+    ]);
 
     return res.status(200).json({
-      message: "Statut du MasterPack mis à jour avec succès",
+      message:
+        "Statut du MasterPack et des colis associés mis à jour avec succès",
       updatedMasterPack,
+      updatedColis,
     });
   } catch (error) {
     console.error(
-      "Erreur lors de la mise à jour du statut du MasterPack :",
+      "Erreur lors de la mise à jour du statut du MasterPack et des colis :",
       error
     );
     return res.status(500).json({ error: "Erreur interne du serveur" });

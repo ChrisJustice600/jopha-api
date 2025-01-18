@@ -186,7 +186,7 @@ const updateParcelInMasterPack = async (req, res) => {
         error: "Le colis n'est pas associé à ce MasterPack",
       });
     }
-    const status = "RECEIVED";
+    const status = "IN_TRANSIT";
     // Mise à jour des données du colis
     const updatedColis = await prisma.colis.update({
       where: { id: parseInt(colisId) },
@@ -251,11 +251,9 @@ const addParcelInGroupage = async (req, res) => {
       );
 
       if (!masterPack) {
-        return res
-          .status(404)
-          .json({
-            error: `Master pack avec le numéro ${masterPackNumber} non trouvé.`,
-          });
+        return res.status(404).json({
+          error: `Master pack avec le numéro ${masterPackNumber} non trouvé.`,
+        });
       }
 
       console.log("Master pack sélectionné :", masterPack.numero);
