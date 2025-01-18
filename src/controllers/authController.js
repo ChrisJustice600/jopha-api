@@ -150,7 +150,7 @@ async function forgotPassword(req, res) {
     console.log(testuser);
 
     // Création du lien de réinitialisation
-    const resetLink = `${process.env.FRONTEND_URL_LOCAL}/new-password?token=${token}`;
+    const resetLink = `${process.env.FRONTEND_URL_LOCAL}/auth/reset-password?token=${token}`;
 
     // Envoi de l'e-mail
     await sendResetEmail(email, resetLink);
