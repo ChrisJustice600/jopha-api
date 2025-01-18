@@ -150,7 +150,7 @@ async function forgotPassword(req, res) {
     console.log(testuser);
 
     // Création du lien de réinitialisation
-    const resetLink = `${process.env.FRONTEND_URL_LOCAL}/auth/reset-password?token=${token}`;
+    const resetLink = `${process.env.FRONTEND_URL_PRODUCTION}/auth/reset-password?token=${token}`;
 
     // Envoi de l'e-mail
     await sendResetEmail(email, resetLink);
@@ -172,6 +172,8 @@ async function forgotPassword(req, res) {
 
 async function resetPassword(req, res) {
   const { token, newPassword } = req.body;
+  console.log(token);
+  console.log(newPassword);
 
   // Validate request body
   if (!token || !newPassword) {
@@ -186,6 +188,7 @@ async function resetPassword(req, res) {
     const user = await prisma.user.findUnique({
       where: { id: decoded.id },
     });
+    console.log(user);
 
     // Check if user exists and token is valid
     if (!user) {
