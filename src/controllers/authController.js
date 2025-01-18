@@ -102,10 +102,8 @@ const signin = async (req, res) => {
     // Envoyer le cookie avec des options sécurisées
     res
       .cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production", // HTTPS en production
-        sameSite: "strict",
-        maxAge: 3600000, // 1 heure
+        path: "/", // Accessible sur tout le site
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 30 jours en millisecondes
       })
       .json({
         user: {
@@ -118,6 +116,12 @@ const signin = async (req, res) => {
     console.error("Erreur lors de la connexion:", error);
     res.status(500).json({ error: "Erreur interne du serveur" });
   }
+};
+
+const logout = (req, res) => {
+  res
+    .clearCookie("token", { path: "/" }) // Supprime le cookie
+    .json({ message: "Déconnexion réussie" });
 };
 
 // Fonction principale
@@ -184,10 +188,11 @@ async function resetPassword(req, res) {
   try {
     // Verify token
     const decoded = verifyToken(token);
+    console.log(decoded);
 
     // Find user by id and resetToken
     const user = await prisma.user.findUnique({
-      where: { id: decoded.id },
+      where: { email: decoded.email }, // Recherche par email au lieu de l'id
     });
     console.log(user);
 
@@ -199,22 +204,26 @@ async function resetPassword(req, res) {
     }
 
     if (user.resetToken !== token) {
+      console.log("Token invalide");
+
       return res.status(400).json({ error: "Token invalide." });
     }
 
     if (user.resetTokenExp < new Date()) {
+      console.log("Token expiré.");
+
       return res.status(400).json({ error: "Token expiré." });
     }
 
     // Hash new password
     const hashedPassword = await hashPassword(password);
-    // console.log("auth:", user);
+    console.log("hashedPassword:", hashedPassword);
 
     // Update user password and reset token fields
     const userInfoUpdated = await prisma.user.update({
       where: { id: user.id },
       data: {
-        password,
+        password: hashedPassword,
         resetToken: null,
         resetTokenExp: null,
       },
@@ -239,4 +248,4 @@ async function resetPassword(req, res) {
   }
 }
 
-module.exports = { register, signin, resetPassword, forgotPassword };
+module.exports = { register, signin, logout, resetPassword, forgotPassword };
