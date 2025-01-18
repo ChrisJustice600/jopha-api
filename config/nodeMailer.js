@@ -358,7 +358,7 @@ const sendAccountCreatedEmail = async (email, password) => {
     await transporter.sendMail({
       from: "no-reply@enywork.com", // Adresse personnalisée
       to: email,
-      subject: "Bienvenue sur OptSolution - Votre compte a été créé",
+      subject: "Votre compte a été créé",
       html: emailHTML,
     });
   } catch (err) {
