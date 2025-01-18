@@ -1,4 +1,5 @@
-const { generateToken } = require("../../config/jwtconfig");
+const { hashPassword } = require("../../config/bcryptConfig");
+const { generateToken, verifyToken } = require("../../config/jwtconfig");
 const {
   sendAccountCreatedEmail,
   sendResetEmail,
@@ -171,12 +172,12 @@ async function forgotPassword(req, res) {
 }
 
 async function resetPassword(req, res) {
-  const { token, newPassword } = req.body;
+  const { token, password } = req.body;
   console.log(token);
-  console.log(newPassword);
+  console.log(password);
 
   // Validate request body
-  if (!token || !newPassword) {
+  if (!token || !password) {
     return res.status(400).json({ error: "Données manquantes." });
   }
 
@@ -206,14 +207,14 @@ async function resetPassword(req, res) {
     }
 
     // Hash new password
-    const hashedPassword = await hashPassword(newPassword);
+    const hashedPassword = await hashPassword(password);
     // console.log("auth:", user);
 
     // Update user password and reset token fields
     const userInfoUpdated = await prisma.user.update({
       where: { id: user.id },
       data: {
-        password: hashedPassword,
+        password,
         resetToken: null,
         resetTokenExp: null,
       },
