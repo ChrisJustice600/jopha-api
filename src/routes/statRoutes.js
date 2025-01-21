@@ -1,8 +1,9 @@
 const { Router } = require("express");
-const { getGroupageStatistics } = require("../controllers/statController");
+// const { getGroupageStatistics } = require("../controllers/statController");
+const statController = require("../controllers/statController");
 
 const statRouter = Router();
 
-statRouter.post("/global", getGroupageStatistics);
+statRouter.get("/global/:groupageCode", statController.getGroupageStatistics);
 
 module.exports = statRouter;
