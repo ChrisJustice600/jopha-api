@@ -100,14 +100,22 @@ const signin = async (req, res) => {
     const token = generateToken(user);
 
     // Envoyer le cookie avec des options sécurisées
-    res.cookie("token", token).json({
-      user: {
-        username: user.username,
-        email: user.email,
-        role: user.role,
-      },
-      token,
-    });
+    res
+      .cookie("token", token, {
+        httpOnly: false, // Accessible via JavaScript
+        secure: false, // HTTPS non requis en local
+        sameSite: "Lax",
+        path: "/",
+        maxAge: 3600000,
+      })
+      .json({
+        user: {
+          username: user.username,
+          email: user.email,
+          role: user.role,
+        },
+        token,
+      });
   } catch (error) {
     console.error("Erreur lors de la connexion:", error);
     res.status(500).json({ error: "Erreur interne du serveur" });
