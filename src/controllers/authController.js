@@ -103,7 +103,10 @@ const signin = async (req, res) => {
     res
       .cookie("token", token, {
         path: "/", // Accessible sur tout le site
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 30 jours en millisecondes
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours en millisecondes
+        httpOnly: false, // Permettre l'accès au cookie via JavaScript
+        // secure: process.env.NODE_ENV === "production", // Envoyer uniquement en HTTPS en production
+        sameSite: "lax", // Protection contre les attaques CSRF
       })
       .json({
         user: {
