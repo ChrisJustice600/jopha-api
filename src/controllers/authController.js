@@ -105,8 +105,8 @@ const signin = async (req, res) => {
         username: user.username,
         email: user.email,
         role: user.role,
-        token: token,
       },
+      token,
     });
   } catch (error) {
     console.error("Erreur lors de la connexion:", error);
