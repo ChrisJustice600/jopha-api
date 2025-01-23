@@ -100,18 +100,14 @@ const signin = async (req, res) => {
     const token = generateToken(user);
 
     // Envoyer le cookie avec des options sécurisées
-    res
-      .cookie("token", token, {
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours en millisecondes
-      })
-      .json({
-        user: {
-          username: user.username,
-          email: user.email,
-          role: user.role,
-          token: token,
-        },
-      });
+    res.cookie("token", token).json({
+      user: {
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        token: token,
+      },
+    });
   } catch (error) {
     console.error("Erreur lors de la connexion:", error);
     res.status(500).json({ error: "Erreur interne du serveur" });
