@@ -1,7 +1,8 @@
 const { verifyToken } = require("../../config/jwtconfig");
 
 const checkUserAuthenticated = (req, res, next) => {
-  const { token } = req.cookies;
+  // const { token } = req.cookies;
+  const token = req.headers.authorization?.split(" ")[1]; // Récupérer le token depuis les en-têtes
 
   if (!token) {
     return res.status(401).json({ error: "Authentification requise" });
