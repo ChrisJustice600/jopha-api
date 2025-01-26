@@ -120,6 +120,10 @@ const logout = (req, res) => {
     .json({ message: "Déconnexion réussie" });
 };
 
+const verify = (req, res) => {
+  res.json({ user: req.user });
+};
+
 // Fonction principale
 async function forgotPassword(req, res) {
   const { email } = req.body;
