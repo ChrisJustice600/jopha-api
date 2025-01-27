@@ -248,4 +248,11 @@ async function resetPassword(req, res) {
   }
 }
 
-module.exports = { register, signin, logout, resetPassword, forgotPassword };
+module.exports = {
+  register,
+  signin,
+  logout,
+  resetPassword,
+  forgotPassword,
+  verify,
+};
