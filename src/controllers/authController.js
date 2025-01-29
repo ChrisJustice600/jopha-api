@@ -75,12 +75,15 @@ const signin = async (req, res) => {
   try {
     const { identifier, password } = req.body;
 
+    console.log(identifier, password);
+
     // Vérifier si l'utilisateur existe avec l'email ou le username
     const user = await prisma.user.findFirst({
       where: {
         OR: [{ email: identifier }, { username: identifier }],
       },
     });
+    console.log(user);
 
     if (!user) {
       return res
@@ -98,16 +101,31 @@ const signin = async (req, res) => {
 
     // Générer un token JWT
     const token = generateToken(user);
+    console.log("token: ", token);
 
     // Envoyer le cookie avec des options sécurisées
-    res.cookie("token", token, { httpOnly: true }).json({
-      user: {
-        username: user.username,
-        email: user.email,
-        role: user.role,
-      },
-      token,
-    });
+    // res.cookie("token", token, { httpOnly: true })
+    // Envoyer le token dans un cookie
+    res
+      .cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: "/",
+        domain:
+          process.env.NODE_ENV === "production"
+            ? ".votredomaine.com"
+            : "localhost",
+      })
+      .json({
+        user: {
+          username: user.username,
+          email: user.email,
+          role: user.role,
+        },
+        token,
+      });
   } catch (error) {
     console.error("Erreur lors de la connexion:", error);
     res.status(500).json({ error: "Erreur interne du serveur" });
@@ -121,6 +139,8 @@ const logout = (req, res) => {
 };
 
 const verify = (req, res) => {
+  console.log("verify: ", req.user);
+
   res.json({ user: req.user });
 };
 

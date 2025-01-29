@@ -10,7 +10,7 @@ const generateToken = (user) => {
 
   // Generate token with secret key and expiration time (48 hours)
   return jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: Date.now() + 48 * 60 * 60 * 1000,
+    expiresIn: "7d",
   });
 };
 

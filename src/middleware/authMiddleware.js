@@ -1,22 +1,35 @@
 const { verifyToken } = require("../../config/jwtconfig");
 
 const checkUserAuthenticated = (req, res, next) => {
-  // const { token } = req.cookies;
-  const token = req.headers.authorization?.split(" ")[1]; // Récupérer le token depuis les en-têtes
-
-  if (!token) {
-    return res.status(401).json({ error: "Authentification requise" });
-  }
+  // console.log("Cookies:", req.cookies);
+  // console.log("Headers:", req.headers);
 
   try {
+    // Récupérer le token depuis l'en-tête Authorization (format 'Bearer <token>')
+    const { token } = req.cookies; // Récupérer le cookie contenant le token
+    if (!token) {
+      return res.status(401).json({ loggedIn: false });
+    }
+    if (!token) {
+      return res
+        .status(401)
+        .json({ error: "Token manquant dans l'en-tête Authorization." });
+    }
+
+    // Décoder et vérifier le token
     const decodedToken = verifyToken(token);
     if (!decodedToken) {
-      return res.status(401).json({ error: "Token invalide" });
+      return res.status(401).json({ error: "Access denied. Token invalide." });
     }
-    req.user = decodedToken; // Le token décodé contient les informations de l'utilisateur
+
+    // Ajouter les informations de l'utilisateur décodé à req.user
+    req.user = decodedToken;
     next();
   } catch (error) {
-    return res.status(401).json({ error: "Erreur d'authentification" });
+    console.error("Erreur lors de la vérification du token :", error.message);
+    return res
+      .status(500)
+      .json({ error: "Erreur d'authentification serveur." });
   }
 };
 
