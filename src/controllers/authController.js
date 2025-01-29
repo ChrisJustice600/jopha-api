@@ -108,15 +108,21 @@ const signin = async (req, res) => {
     // Envoyer le token dans un cookie
     res
       .cookie("token", token, {
+        // httpOnly: true,
+        // secure: process.env.NODE_ENV === "production",
+        // sameSite: "strict",
+        // maxAge: 7 * 24 * 60 * 60 * 1000,
+        // path: "/",
+        // domain:
+        //   process.env.NODE_ENV === "production"
+        //     ? "jopha-front.vercel.app"
+        //     : "localhost",
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        secure: process.env.NODE_ENV === "production", // Secure en prod
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // Important !
         maxAge: 7 * 24 * 60 * 60 * 1000,
-        path: "/",
         domain:
-          process.env.NODE_ENV === "production"
-            ? "jopha-front.vercel.app"
-            : "localhost",
+          process.env.NODE_ENV === "production" ? ".onrender.com" : "localhost", // Pour que le cookie soit valide
       })
       .json({
         user: {
