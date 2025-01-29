@@ -115,7 +115,7 @@ const signin = async (req, res) => {
         path: "/",
         domain:
           process.env.NODE_ENV === "production"
-            ? ".votredomaine.com"
+            ? "jopha-front.vercel.app"
             : "localhost",
       })
       .json({
