@@ -90,25 +90,28 @@ model MasterPack {
 }
 
 model Colis {
-  id               Int             @id @default(autoincrement())
-  code             String?         @unique
-  nom_complet      String
-  status           Status          @default(RECEIVED)
-  tracking_code    String
-  telephone        String
-  poids_colis      String
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
-  masterPackId     Int?
-  groupageId       Int?
-  transportType    TransportType?
-  airType          AirTransport?
-  itemType         ItemType?
-  clientAvecCodeId Int?
-  clientAvecCode   ClientAvecCode? @relation(fields: [clientAvecCodeId], references: [id])
-  groupage         Groupage?       @relation("GroupageColis", fields: [groupageId], references: [id])
-  masterPack       MasterPack?     @relation("MasterPackColis", fields: [masterPackId], references: [id])
-  notes            Note[]
+  id                     Int             @id @default(autoincrement())
+  code                   String          @unique
+  nom_complet            String
+  status                 Status          @default(RECEIVED)
+  tracking_code          String          @unique
+  telephone              String
+  poids_colis            Float
+  transportType          TransportType
+  airType                AirTransport?
+  itemType               ItemType
+  volume                 Float?
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  masterPackId           Int?
+  groupageId             Int?
+  clientAvecCodeId       Int?
+  clientAvecCode         ClientAvecCode? @relation(fields: [clientAvecCodeId], references: [id])
+  groupage               Groupage?       @relation("GroupageColis", fields: [groupageId], references: [id])
+  masterPack             MasterPack?     @relation("MasterPackColis", fields: [masterPackId], references: [id])
+  notes                  Note[]
+  invoiceItems           InvoiceItem[]
+  deliveredInvoiceItemId String?         @unique
 
   @@index([nom_complet])
   @@index([status])
@@ -116,6 +119,59 @@ model Colis {
   @@index([airType])
   @@index([createdAt])
   @@index([updatedAt])
+  @@index([tracking_code])
+}
+
+model Client {
+  id        String    @id @default(uuid())
+  fullName  String
+  address   String
+  phone     String    @unique
+  email     String?   @unique
+  createdAt DateTime  @default(now())
+  invoices  Invoice[]
+}
+
+model Invoice {
+  id            String           @id @default(uuid())
+  invoiceNumber String           @unique
+  date          DateTime         @default(now())
+  isProforma    Boolean          @default(false)
+  totalAmount   Float
+  client        Client           @relation(fields: [clientId], references: [id])
+  clientId      String
+  items         InvoiceItem[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  history       InvoiceHistory[]
+
+  @@index([invoiceNumber])
+  @@index([date])
+}
+
+model InvoiceItem {
+  id            String   @id @default(uuid())
+  invoice       Invoice  @relation(fields: [invoiceId], references: [id])
+  invoiceId     String
+  colis         Colis    @relation(fields: [colisId], references: [id])
+  colisId       Int // Changed from String to Int to match Colis.id
+  discount      Int?     @default(0)
+  appliedStatus Status
+  isFinal       Boolean  @default(false) // Indique si c'est la facture finale
+  createdAt     DateTime @default(now())
+
+  @@unique([invoiceId, colisId]) // Un colis ne peut être qu'une fois par facture
+  @@index([appliedStatus])
+}
+
+model InvoiceHistory {
+  id         String   @id @default(uuid())
+  invoice    Invoice  @relation(fields: [invoiceId], references: [id])
+  invoiceId  String
+  actionType String // "CREATED", "UPDATED", "CANCELED"
+  details    String?
+  changedBy  String // Utilisateur ou système
+  changedAt  DateTime @default(now())
 }
 
 model ClientAvecCode {

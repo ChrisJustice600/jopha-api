@@ -121,7 +121,6 @@ const signin = async (req, res) => {
         secure: process.env.NODE_ENV === "production", // Secure en prod
         // sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // Important !
         sameSite: "none", // Permet le cross-origin entre backend et frontend
-
         maxAge: 7 * 24 * 60 * 60 * 1000,
         // domain:
         //   process.env.NODE_ENV === "production" ? ".onrender.com" : "localhost", // Pour que le cookie soit valide
