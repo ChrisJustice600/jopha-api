@@ -96,10 +96,10 @@ model Colis {
   status                 Status          @default(RECEIVED)
   tracking_code          String          @unique
   telephone              String
-  poids_colis            Float
-  transportType          TransportType
+  poids_colis            String
+  transportType          TransportType?
   airType                AirTransport?
-  itemType               ItemType
+  itemType               ItemType?
   volume                 Float?
   createdAt              DateTime        @default(now())
   updatedAt              DateTime        @updatedAt
@@ -138,6 +138,7 @@ model Invoice {
   date          DateTime         @default(now())
   isProforma    Boolean          @default(false)
   totalAmount   Float
+  discount      Int?             @default(0) // Réduction globale en pourcentage
   client        Client           @relation(fields: [clientId], references: [id])
   clientId      String
   items         InvoiceItem[]
@@ -154,8 +155,7 @@ model InvoiceItem {
   invoice       Invoice  @relation(fields: [invoiceId], references: [id])
   invoiceId     String
   colis         Colis    @relation(fields: [colisId], references: [id])
-  colisId       Int // Changed from String to Int to match Colis.id
-  discount      Int?     @default(0)
+  colisId       Int
   appliedStatus Status
   isFinal       Boolean  @default(false) // Indique si c'est la facture finale
   createdAt     DateTime @default(now())
