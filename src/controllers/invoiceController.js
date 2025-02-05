@@ -3,7 +3,15 @@ const { calculateTotalCost } = require("../../config/billing");
 
 const createInvoice = async (req, res) => {
   try {
-    const { isProforma, clientInfo, colisIds, discount } = req.body;
+    const { items, clientInfo, isProforma } = req.body;
+    // Extraire les IDs des objets dans `items`
+    const colisIds = items.reduce((acc, item) => {
+      acc[item.id] = true; // On utilise `true` comme valeur, mais vous pouvez mettre autre chose si nécessaire
+      return acc;
+    }, {});
+
+    const discount = items[0].discount;
+    // const { isProforma, clientInfo, colisIds, discount } = req.body;
 
     // Validation des données
     if (!clientInfo || !colisIds?.length) {
@@ -77,7 +85,7 @@ const createInvoice = async (req, res) => {
       // Création de la facture
       const invoice = await tx.invoice.create({
         data: {
-          invoiceNumber: `INV-${Date.now()}`,
+          invoiceNumber: `FACT-JOPHA-${Date.now()}`,
           isProforma,
           totalAmount,
           discount: isProforma ? null : discount || 0, // Enregistrer la réduction uniquement pour les factures finales
