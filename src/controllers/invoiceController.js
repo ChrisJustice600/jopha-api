@@ -199,31 +199,90 @@ const createInvoice = async (req, res) => {
     });
   }
 };
+
 const invoiceHistory = async (req, res) => {
   try {
-    const invoiceHistory = await prisma.invoiceHistory.findMany({
+    // Récupérer toutes les factures avec leurs éléments associés
+    const invoices = await prisma.invoice.findMany({
       include: {
-        invoice: true,
+        items: {
+          include: {
+            colis: true, // Inclure les détails du colis
+          },
+        },
+        client: true, // Inclure les détails du client
+        history: true, // Inclure l'historique des modifications
       },
       orderBy: {
-        changedAt: "desc",
+        createdAt: "desc", // Trier par date de création décroissante
       },
     });
 
-    res.status(200).json(invoiceHistory);
+    console.log("invoiceshis:", invoices);
+
+    // Formater la réponse pour correspondre au format de createInvoice
+    const formattedInvoices = invoices.map((invoice) => ({
+      id: invoice.id,
+      invoiceNumber: invoice.invoiceNumber,
+      isProforma: invoice.isProforma,
+      totalAmount: invoice.totalAmount,
+      discount: invoice.discount,
+      clientInfo: {
+        fullName: invoice.client.fullName,
+        address: invoice.client.address,
+        phone: invoice.client.phone,
+        email: invoice.client.email,
+      },
+      items: invoice.items.map((item) => {
+        const colis = item.colis;
+        let billingRate = null;
+
+        if (colis.transportType === "AERIEN") {
+          const rates = billingRates.air[colis.itemType];
+          billingRate = {
+            rateType: rates.billingType,
+            unitPrice:
+              colis.airType === "EXPRESS" ? rates.express : rates.regular,
+            total: calculateItemCost(colis),
+          };
+        } else if (colis.volume != null) {
+          const volume = colis.volume;
+          const range = billingRates.maritime.ranges.find(
+            (r) => volume >= r.min && (!r.max || volume < r.max)
+          );
+          if (range) {
+            billingRate = {
+              rateType: "volume",
+              unitPrice: range.rate,
+              total: calculateItemCost(colis),
+            };
+          }
+        }
+
+        return {
+          ...colis,
+          appliedStatus: item.appliedStatus,
+          billing: billingRate,
+        };
+      }),
+      createdAt: invoice.createdAt,
+      history: invoice.history,
+    }));
+
+    // Retourner la réponse formatée
+    res.status(200).json(formattedInvoices);
   } catch (error) {
     console.error(
-      "Erreur lors de la récuperation de l'historique des factures :",
+      "Erreur lors de la récupération de l'historique des factures :",
       error
     );
     res.status(500).json({
-      error: `Échec des récuperations des factures : ${
+      error: `Échec de la récupération de l'historique des factures : ${
         error instanceof Error ? error.message : "Erreur inconnue"
       }`,
     });
   }
 };
-
 module.exports = {
   createInvoice,
   invoiceHistory,
