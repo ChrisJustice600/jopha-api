@@ -9,6 +9,8 @@ const { billingRates } = require("./billingRates");
  * @returns {number} - Le coût total après application de la réduction (si applicable).
  */
 function calculateTotalCost(items, discount = 0, isFinal = false) {
+  console.log("calculateTotalCost: ", items);
+
   // Calcul du coût total sans réduction
   const totalCostWithoutDiscount = items.reduce((total, item) => {
     try {

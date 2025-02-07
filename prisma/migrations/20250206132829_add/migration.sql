@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Colis" ALTER COLUMN "code" DROP NOT NULL;

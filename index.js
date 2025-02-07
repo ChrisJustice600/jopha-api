@@ -23,6 +23,7 @@ app.use(express.json());
 const allowedOrigins = [
   "https://jopha-front.vercel.app",
   "http://localhost:3000",
+  "http://localhost:3001",
 ];
 
 const corsOptions = {

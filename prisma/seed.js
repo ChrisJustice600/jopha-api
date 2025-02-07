@@ -167,10 +167,9 @@ async function main() {
         status: "RECEIVED",
         tracking_code: faker.string.alphanumeric(10), // Génère un code alphanumérique
         telephone: faker.phone.number("+212 ## ### ####"),
-        poids_colis:
-          faker.number
-            .float({ min: 0.5, max: 30, precision: 0.01 })
-            .toFixed(2) + " kg",
+        poids_colis: faker.number
+          .float({ min: 0.5, max: 30, precision: 0.01 })
+          .toFixed(2),
         createdAt: faker.date.recent(),
         updatedAt: new Date(),
       },

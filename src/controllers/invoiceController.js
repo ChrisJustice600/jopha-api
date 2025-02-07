@@ -1,17 +1,22 @@
 // controllers/invoiceController.ts
-const { calculateTotalCost } = require("../../config/billing");
+const {
+  calculateTotalCost,
+  calculateItemCost,
+} = require("../../config/billing");
+const { prisma } = require("../../database/prisma");
+const { billingRates } = require("../../config/billingRates");
 
 const createInvoice = async (req, res) => {
   try {
     const { items, clientInfo, isProforma } = req.body;
+
     // Extraire les IDs des objets dans `items`
-    const colisIds = items.reduce((acc, item) => {
-      acc[item.id] = true; // On utilise `true` comme valeur, mais vous pouvez mettre autre chose si nécessaire
-      return acc;
-    }, {});
+    const colisIds = items.map((item) => item.id);
+    console.log(colisIds);
 
     const discount = items[0].discount;
     // const { isProforma, clientInfo, colisIds, discount } = req.body;
+    // console.log(discount);
 
     // Validation des données
     if (!clientInfo || !colisIds?.length) {
@@ -46,6 +51,7 @@ const createInvoice = async (req, res) => {
     const colis = await prisma.colis.findMany({
       where: { id: { in: colisIds } },
     });
+    console.log("validation colis: ", colis);
 
     if (colis.length !== colisIds.length) {
       return res
@@ -53,27 +59,28 @@ const createInvoice = async (req, res) => {
         .json({ error: "Un ou plusieurs colis introuvables." });
     }
 
-    // Vérification des statuts des colis
-    if (isProforma) {
-      const invalidStatus = colis.some(
-        (c) => c.status === "ARRIVED" || c.status === "DELIVERED"
-      );
-      if (invalidStatus) {
-        return res.status(400).json({
-          error: "Les colis ARRIVED/DELIVERED ne peuvent pas être en proforma.",
-        });
-      }
-    } else {
-      const invalidStatus = colis.some((c) => c.status !== "ARRIVED");
-      if (invalidStatus) {
-        return res.status(400).json({
-          error: "Tous les colis doivent être ARRIVED pour une facture finale.",
-        });
-      }
-    }
+    // // Vérification des statuts des colis
+    // if (isProforma) {
+    //   const invalidStatus = colis.some(
+    //     (c) => c.status === "ARRIVED" || c.status === "DELIVERED"
+    //   );
+    //   if (invalidStatus) {
+    //     return res.status(400).json({
+    //       error: "Les colis ARRIVED/DELIVERED ne peuvent pas être en proforma.",
+    //     });
+    //   }
+    // } else {
+    //   const invalidStatus = colis.some((c) => c.status !== "ARRIVED");
+    //   if (invalidStatus) {
+    //     return res.status(400).json({
+    //       error: "Tous les colis doivent être ARRIVED pour une facture finale.",
+    //     });
+    //   }
+    // }
 
     // Calcul du montant total sans réduction
     const totalAmountWithoutDiscount = calculateTotalCost(colis);
+    console.log("total:", totalAmountWithoutDiscount);
 
     // Application de la réduction uniquement pour les factures finales
     const totalAmount = isProforma
@@ -136,6 +143,7 @@ const createInvoice = async (req, res) => {
 
       return invoice;
     });
+    console.log("Retour facture: ", invoice);
 
     // Réponse avec les données nécessaires pour la génération du PDF
     res.status(201).json({
@@ -143,17 +151,43 @@ const createInvoice = async (req, res) => {
       invoiceNumber: invoice.invoiceNumber,
       isProforma: invoice.isProforma,
       totalAmount: invoice.totalAmount,
-      discount: invoice.discount, // Inclure la réduction dans la réponse
+      discount: invoice.discount,
       clientInfo: {
         fullName: invoice.client.fullName,
         address: invoice.client.address,
         phone: invoice.client.phone,
         email: invoice.client.email,
       },
-      items: invoice.items.map((item) => ({
-        ...item.colis, // Inclure tous les détails du colis
-        appliedStatus: item.appliedStatus,
-      })),
+      items: invoice.items.map((item) => {
+        const colis = item.colis;
+        let billingRate = null;
+
+        if (colis.transportType === "AERIEN") {
+          const rates = billingRates.air[colis.itemType];
+          billingRate = {
+            rateType: rates.billingType,
+            unitPrice:
+              colis.airType === "EXPRESS" ? rates.express : rates.regular,
+            total: calculateItemCost(colis),
+          };
+        } else {
+          const volume = colis.volume;
+          const range = billingRates.maritime.ranges.find(
+            (r) => volume >= r.min && (!r.max || volume < r.max)
+          );
+          billingRate = {
+            rateType: "volume",
+            unitPrice: range.rate,
+            total: calculateItemCost(colis),
+          };
+        }
+
+        return {
+          ...colis,
+          appliedStatus: item.appliedStatus,
+          billing: billingRate,
+        };
+      }),
       createdAt: invoice.createdAt,
     });
   } catch (error) {
