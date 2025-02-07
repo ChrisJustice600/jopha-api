@@ -199,7 +199,32 @@ const createInvoice = async (req, res) => {
     });
   }
 };
+const invoiceHistory = async (req, res) => {
+  try {
+    const invoiceHistory = await prisma.invoiceHistory.findMany({
+      include: {
+        invoice: true,
+      },
+      orderBy: {
+        changedAt: "desc",
+      },
+    });
+
+    res.status(200).json(invoiceHistory);
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récuperation de l'historique des factures :",
+      error
+    );
+    res.status(500).json({
+      error: `Échec des récuperations des factures : ${
+        error instanceof Error ? error.message : "Erreur inconnue"
+      }`,
+    });
+  }
+};
 
 module.exports = {
   createInvoice,
+  invoiceHistory,
 };
