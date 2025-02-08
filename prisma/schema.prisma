@@ -228,3 +228,31 @@ enum ItemType {
   CABELLO
   TELEPHONE
 }
+
+model Expense {
+  id          String          @id @default(uuid())
+  date        DateTime
+  description String
+  amount      Float
+  currency    Currency
+  category    ExpenseCategory
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([date])
+  @@index([category])
+}
+
+enum Currency {
+  USD
+  CDF
+}
+
+enum ExpenseCategory {
+  TRANSPORT
+  FOURNITURES
+  MAINTENANCE
+  SALAIRES
+  LOYER
+  AUTRES
+}

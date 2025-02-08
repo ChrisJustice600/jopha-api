@@ -4,9 +4,10 @@ const userRoutes = require("./userRoutes");
 const colisRoutes = require("./colisRoutes");
 const groupageRoutes = require("./groupageRoutes");
 const clientCodeRoutes = require("./clientCodeRoutes");
-const invoiceRoutes = require("./invoiceRoutes");
 const masterPackRoutes = require("./masterPackRoutes");
 const statRoutes = require("./statRoutes");
+const invoiceRoutes = require("./invoiceRoutes");
+const expenseRoutes = require("./expenseRoutes");
 
 const router = express.Router();
 
@@ -18,5 +19,6 @@ router.use("/groupages", groupageRoutes);
 router.use("/statistics", statRoutes);
 router.use("/client", clientCodeRoutes);
 router.use("/invoice", invoiceRoutes);
+router.use("/expense", expenseRoutes);
 
 module.exports = router;
