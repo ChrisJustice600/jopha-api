@@ -47,6 +47,49 @@ const createExpense = async (req, res) => {
   }
 };
 
+const GetAllExpense = async (req, res) => {
+  try {
+    const { date, description } = req.query;
+
+    // Obtenir la date du jour si aucun filtre de date n'est fourni
+    const filterDate = date ? new Date(date) : new Date();
+    filterDate.setHours(0, 0, 0, 0);
+    const nextDay = new Date(filterDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+
+    // Construire les filtres dynamiquement
+    const filters = {
+      date: {
+        gte: filterDate,
+        lt: nextDay,
+      },
+    };
+
+    if (description) {
+      filters.description = {
+        contains: description,
+        mode: "insensitive", // Permet la recherche insensible à la casse
+      };
+    }
+
+    // Récupérer les dépenses avec les filtres appliqués
+    const expenses = await prisma.expense.findMany({
+      where: filters,
+      orderBy: {
+        date: "desc",
+      },
+    });
+
+    res.status(200).json(expenses);
+  } catch (error) {
+    console.error("Erreur lors de la récupération des dépenses :", error);
+    res.status(500).json({
+      error: "Une erreur est survenue lors de la récupération des dépenses.",
+    });
+  }
+};
+
 module.exports = {
   createExpense,
+  GetAllExpense,
 };
