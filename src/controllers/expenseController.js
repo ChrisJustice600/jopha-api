@@ -15,15 +15,15 @@ const createExpense = async (req, res) => {
       .json({ error: "Le montant doit être un nombre positif." });
   }
 
-  // Validation de la devise (doit être une valeur valide de l'énumération Currency)
-  if (!Object.values(prisma.Currency).includes(currency)) {
-    return res.status(400).json({ error: "Devise non valide." });
-  }
+  // // Validation de la devise (doit être une valeur valide de l'énumération Currency)
+  // if (!Object.values(prisma.Currency).includes(currency)) {
+  //   return res.status(400).json({ error: "Devise non valide." });
+  // }
 
-  // Validation de la catégorie (doit être une valeur valide de l'énumération ExpenseCategory)
-  if (!Object.values(prisma.ExpenseCategory).includes(category)) {
-    return res.status(400).json({ error: "Catégorie de dépense non valide." });
-  }
+  // // Validation de la catégorie (doit être une valeur valide de l'énumération ExpenseCategory)
+  // if (!Object.values(prisma.ExpenseCategory).includes(category)) {
+  //   return res.status(400).json({ error: "Catégorie de dépense non valide." });
+  // }
 
   try {
     // Créer la dépense dans la base de données
@@ -89,7 +89,64 @@ const GetAllExpense = async (req, res) => {
   }
 };
 
+const getDailyExpenseReport = async (req, res) => {
+  try {
+    // Récupérer la date du jour (minuit - 23:59)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Récupérer les dépenses du jour
+    const expenses = await prisma.expense.findMany({
+      where: {
+        date: {
+          gte: today,
+          lt: tomorrow,
+        },
+      },
+    });
+
+    // Calcul des totaux
+    const totalUSD = expenses
+      .filter((e) => e.currency === "USD")
+      .reduce((sum, e) => sum + e.amount, 0);
+
+    const totalCDF = expenses
+      .filter((e) => e.currency === "CDF")
+      .reduce((sum, e) => sum + e.amount, 0);
+
+    // Génération du numéro de rapport unique
+    const reportNumber = `RAPPORT-${Date.now().toString().slice(-6)}`;
+
+    // Créer un nouvel historique de dépense
+    await prisma.expenseHistory.create({
+      data: {
+        reportNumber,
+        totalUSD,
+        totalCDF,
+        expenses: {
+          connect: expenses.map((expense) => ({ id: expense.id })),
+        },
+      },
+    });
+
+    // Réponse JSON avec rapport et dépenses associées
+    return res.json({
+      date: today.toISOString(),
+      reportNumber,
+      totalUSD,
+      totalCDF,
+      expenses,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la génération du rapport :", error);
+    return res.status(500).json({ message: "Erreur serveur" });
+  }
+};
+
 module.exports = {
   createExpense,
   GetAllExpense,
+  getDailyExpenseReport,
 };

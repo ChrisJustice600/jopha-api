@@ -236,6 +236,8 @@ model Expense {
   amount      Float
   currency    Currency
   category    ExpenseCategory
+  historyId   String?
+  history     ExpenseHistory? @relation("HistoryExpenses", fields: [historyId], references: [id])
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
@@ -255,4 +257,15 @@ enum ExpenseCategory {
   SALAIRES
   LOYER
   AUTRES
+}
+
+model ExpenseHistory {
+  id           String    @id @default(uuid())
+  date         DateTime  @default(now())
+  reportNumber String    @unique
+  totalUSD     Float
+  totalCDF     Float
+  expenses     Expense[] @relation("HistoryExpenses")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }

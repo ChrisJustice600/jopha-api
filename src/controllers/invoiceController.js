@@ -283,6 +283,7 @@ const invoiceHistory = async (req, res) => {
     });
   }
 };
+
 module.exports = {
   createInvoice,
   invoiceHistory,
