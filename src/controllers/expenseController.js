@@ -145,8 +145,49 @@ const getDailyExpenseReport = async (req, res) => {
   }
 };
 
+const getAllExpenseHistory = async (req, res) => {
+  try {
+    const expenseHistory = await prisma.expenseHistory.findMany({
+      include: {
+        expenses: true // Inclure toutes les dépenses associées
+      },
+      orderBy: {
+        date: 'desc' // Trier par date décroissante
+      }
+    });
+
+    // Formater la réponse
+    const formattedHistory = expenseHistory.map(history => ({
+      id: history.id,
+      date: history.date,
+      reportNumber: history.reportNumber,
+      totalUSD: history.totalUSD,
+      totalCDF: history.totalCDF,
+      createdAt: history.createdAt,
+      updatedAt: history.updatedAt,
+      expenses: history.expenses.map(expense => ({
+        id: expense.id,
+        date: expense.date,
+        description: expense.description,
+        amount: expense.amount,
+        currency: expense.currency,
+        category: expense.category,
+        createdAt: expense.createdAt
+      }))
+    }));
+
+    res.status(200).json(formattedHistory);
+  } catch (error) {
+    console.error("Erreur lors de la récupération de l'historique des dépenses :", error);
+    res.status(500).json({
+      error: "Une erreur est survenue lors de la récupération de l'historique des dépenses."
+    });
+  }
+};
+
 module.exports = {
   createExpense,
   GetAllExpense,
   getDailyExpenseReport,
+  getAllExpenseHistory,
 };
