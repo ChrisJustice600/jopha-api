@@ -15,21 +15,11 @@ const createExpense = async (req, res) => {
       .json({ error: "Le montant doit être un nombre positif." });
   }
 
-  // // Validation de la devise (doit être une valeur valide de l'énumération Currency)
-  // if (!Object.values(prisma.Currency).includes(currency)) {
-  //   return res.status(400).json({ error: "Devise non valide." });
-  // }
-
-  // // Validation de la catégorie (doit être une valeur valide de l'énumération ExpenseCategory)
-  // if (!Object.values(prisma.ExpenseCategory).includes(category)) {
-  //   return res.status(400).json({ error: "Catégorie de dépense non valide." });
-  // }
-
   try {
     // Créer la dépense dans la base de données
     const expense = await prisma.expense.create({
       data: {
-        date: new Date(date), // Convertir la date en objet Date
+        date: new Date(date),
         description,
         amount,
         currency,
@@ -37,7 +27,6 @@ const createExpense = async (req, res) => {
       },
     });
 
-    // Répondre avec la dépense créée
     res.status(201).json(expense);
   } catch (error) {
     console.error("Erreur lors de la création de la dépense :", error);
@@ -97,6 +86,19 @@ const getDailyExpenseReport = async (req, res) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
+    // Vérifier si un rapport existe déjà pour aujourd'hui
+    const existingReport = await prisma.expenseReport.findFirst({
+      where: {
+        createdAt: {
+          gte: today,
+          lt: tomorrow,
+        },
+      },
+      include: {
+        expenses: true,
+      },
+    });
+
     // Récupérer les dépenses du jour
     const expenses = await prisma.expense.findMany({
       where: {
@@ -107,6 +109,13 @@ const getDailyExpenseReport = async (req, res) => {
       },
     });
 
+    // Vérifier s'il y a des dépenses
+    if (expenses.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "Aucune dépense trouvée pour aujourd'hui." });
+    }
+
     // Calcul des totaux
     const totalUSD = expenses
       .filter((e) => e.currency === "USD")
@@ -116,72 +125,84 @@ const getDailyExpenseReport = async (req, res) => {
       .filter((e) => e.currency === "CDF")
       .reduce((sum, e) => sum + e.amount, 0);
 
-    // Génération du numéro de rapport unique
-    const reportNumber = `RAPPORT-${Date.now().toString().slice(-6)}`;
+    let report;
 
-    // Créer un nouvel historique de dépense
-    await prisma.expenseHistory.create({
-      data: {
-        reportNumber,
-        totalUSD,
-        totalCDF,
-        expenses: {
-          connect: expenses.map((expense) => ({ id: expense.id })),
+    if (existingReport) {
+      // Mettre à jour le rapport existant
+      report = await prisma.expenseReport.update({
+        where: {
+          id: existingReport.id,
         },
-      },
-    });
+        data: {
+          totalUSD,
+          totalCDF,
+          expenses: {
+            set: expenses.map((expense) => ({ id: expense.id })),
+          },
+        },
+        include: {
+          expenses: true,
+        },
+      });
+    } else {
+      // Créer un nouveau rapport
+      const reportNumber = `RAPPORT-${Date.now().toString().slice(-6)}`;
+      report = await prisma.expenseReport.create({
+        data: {
+          reportNumber,
+          totalUSD,
+          totalCDF,
+          expenses: {
+            connect: expenses.map((expense) => ({ id: expense.id })),
+          },
+        },
+        include: {
+          expenses: true,
+        },
+      });
+    }
 
     // Réponse JSON avec rapport et dépenses associées
     return res.json({
-      date: today.toISOString(),
-      reportNumber,
-      totalUSD,
-      totalCDF,
-      expenses,
+      reportNumber: report.reportNumber,
+      totalUSD: report.totalUSD,
+      totalCDF: report.totalCDF,
+      date: report.createdAt,
+      expenses: report.expenses,
+      isUpdate: !!existingReport,
     });
   } catch (error) {
     console.error("Erreur lors de la génération du rapport :", error);
-    return res.status(500).json({ message: "Erreur serveur" });
+    return res
+      .status(500)
+      .json({ message: "Erreur serveur", error: error.message });
   }
 };
 
-const getAllExpenseHistory = async (req, res) => {
+const getAllExpenseReports = async (req, res) => {
   try {
-    const expenseHistory = await prisma.expenseHistory.findMany({
+    // Récupérer tous les rapports de dépenses avec leurs dépenses associées
+    const expenseReports = await prisma.expenseReport.findMany({
       include: {
-        expenses: true // Inclure toutes les dépenses associées
+        expenses: true, // Inclure les dépenses associées
       },
-      orderBy: {
-        date: 'desc' // Trier par date décroissante
-      }
     });
 
-    // Formater la réponse
-    const formattedHistory = expenseHistory.map(history => ({
-      id: history.id,
-      date: history.date,
-      reportNumber: history.reportNumber,
-      totalUSD: history.totalUSD,
-      totalCDF: history.totalCDF,
-      createdAt: history.createdAt,
-      updatedAt: history.updatedAt,
-      expenses: history.expenses.map(expense => ({
-        id: expense.id,
-        date: expense.date,
-        description: expense.description,
-        amount: expense.amount,
-        currency: expense.currency,
-        category: expense.category,
-        createdAt: expense.createdAt
-      }))
+    // Formater les données selon le type `reportData`
+    const formattedReports = expenseReports.map((report) => ({
+      reportNumber: report.reportNumber,
+      totalUSD: report.totalUSD,
+      totalCDF: report.totalCDF,
+      expenses: report.expenses,
     }));
 
-    res.status(200).json(formattedHistory);
+    // Retourner les rapports formatés
+    return res.status(200).json(formattedReports);
   } catch (error) {
-    console.error("Erreur lors de la récupération de l'historique des dépenses :", error);
-    res.status(500).json({
-      error: "Une erreur est survenue lors de la récupération de l'historique des dépenses."
-    });
+    console.error("Erreur lors de la récupération des rapports :", error);
+    return res
+      .status(500)
+      .json({ message: "Erreur serveur", error: error.message });
   }
 };
 
@@ -189,5 +210,5 @@ module.exports = {
   createExpense,
   GetAllExpense,
   getDailyExpenseReport,
-  getAllExpenseHistory,
+  getAllExpenseReports,
 };
