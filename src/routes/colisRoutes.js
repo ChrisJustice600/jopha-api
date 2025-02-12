@@ -59,4 +59,6 @@ authRouter.get("/filtered", colisController.getFilteredColis);
 
 authRouter.get("/getColisByStatus", colisController.getColisByStatus);
 
+authRouter.get("/advanced-search", colisController.getAdvancedFilteredColis);
+
 module.exports = authRouter;

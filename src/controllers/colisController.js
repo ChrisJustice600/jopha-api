@@ -779,6 +779,162 @@ const getColisByStatus = async (req, res) => {
   }
 };
 
+const getAdvancedFilteredColis = async (req, res) => {
+  try {
+    const {
+      // Paramètres de recherche basiques
+      code,
+      tracking_code,
+      nom_complet,
+      telephone,
+      
+      // Paramètres de statut et type
+      status,
+      transportType,
+      airType,
+      itemType,
+      
+      // Paramètres de date
+      dateType, // 'created' ou 'updated'
+      date, // Date unique
+      startDate,
+      endDate,
+      
+      // Paramètres de pagination
+      page = 1,
+      limit = 50,
+      
+      // Paramètres de tri
+      sortBy = 'createdAt',
+      sortOrder = 'desc'
+    } = req.query;
+
+    // Construction de la clause where
+    let whereClause = {};
+
+    // Filtres basiques avec recherche insensible à la casse
+    if (code) {
+      whereClause.code = { contains: code, mode: 'insensitive' };
+    }
+    if (tracking_code) {
+      whereClause.tracking_code = { contains: tracking_code, mode: 'insensitive' };
+    }
+    if (nom_complet) {
+      whereClause.nom_complet = { contains: nom_complet, mode: 'insensitive' };
+    }
+    if (telephone) {
+      whereClause.telephone = { contains: telephone, mode: 'insensitive' };
+    }
+
+    // Filtres de statut et type
+    if (status) {
+      whereClause.status = status;
+    }
+    if (transportType) {
+      whereClause.transportType = transportType;
+    }
+    if (airType) {
+      whereClause.airType = airType;
+    }
+    if (itemType) {
+      whereClause.itemType = itemType;
+    }
+
+    // Gestion des dates
+    const dateField = dateType === 'updated' ? 'updatedAt' : 'createdAt';
+    
+    if (date) {
+      const searchDate = new Date(date);
+      whereClause[dateField] = {
+        gte: searchDate,
+        lt: new Date(searchDate.getTime() + 24 * 60 * 60 * 1000), // Ajoute 24 heures
+      };
+    } else if (startDate && endDate) {
+      whereClause[dateField] = {
+        gte: new Date(startDate),
+        lte: new Date(endDate),
+      };
+    }
+
+    // Calcul de la pagination
+    const skip = (page - 1) * limit;
+
+    // Construction du tri
+    const orderBy = {
+      [sortBy]: sortOrder.toLowerCase(),
+    };
+
+    // Exécution de la requête avec comptage total
+    const [colis, total] = await prisma.$transaction([
+      prisma.colis.findMany({
+        where: whereClause,
+        include: {
+          masterPack: true,
+          groupage: true,
+          clientAvecCode: true,
+          notes: {
+            include: {
+              user: {
+                select: {
+                  username: true,
+                  email: true,
+                }
+              }
+            },
+            orderBy: {
+              createdAt: 'desc'
+            }
+          },
+          invoiceItems: {
+            include: {
+              invoice: true
+            }
+          }
+        },
+        orderBy,
+        skip,
+        take: Number(limit),
+      }),
+      prisma.colis.count({ where: whereClause })
+    ]);
+
+    // Calcul des métadonnées de pagination
+    const totalPages = Math.ceil(total / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
+
+    res.status(200).json({
+      success: true,
+      data: colis,
+      pagination: {
+        total,
+        page: Number(page),
+        totalPages,
+        hasNextPage,
+        hasPrevPage,
+        limit: Number(limit)
+      },
+      filters: {
+        dateType,
+        status,
+        transportType,
+        airType,
+        itemType,
+        sortBy,
+        sortOrder
+      }
+    });
+
+  } catch (error) {
+    console.error("Erreur lors de la recherche avancée des colis:", error);
+    res.status(500).json({
+      success: false,
+      error: "Erreur lors de la recherche des colis",
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   createColis,
   updateColis,
@@ -795,4 +951,5 @@ module.exports = {
   addParcelToSpecificMasterPack,
   deleteMasterPack,
   getColisByStatus,
+  getAdvancedFilteredColis,
 };
