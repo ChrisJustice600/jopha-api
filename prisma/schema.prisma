@@ -95,11 +95,11 @@ model Colis {
   status                 Status          @default(RECEIVED)
   tracking_code          String          @unique
   telephone              String
-  poids_colis            String
+  poids_colis            String?
   transportType          TransportType?
   airType                AirTransport?
   itemType               ItemType?
-  volume                 Float?
+  volume                 String?
   createdAt              DateTime        @default(now())
   updatedAt              DateTime        @updatedAt
   masterPackId           Int?

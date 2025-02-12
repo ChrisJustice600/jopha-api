@@ -75,20 +75,17 @@ const signin = async (req, res) => {
   try {
     const { identifier, password } = req.body;
 
-    console.log(identifier, password);
-
     // Vérifier si l'utilisateur existe avec l'email ou le username
     const user = await prisma.user.findFirst({
       where: {
         OR: [{ email: identifier }, { username: identifier }],
       },
     });
-    console.log(user);
 
     if (!user) {
       return res
         .status(400)
-        .json({ error: "Identifiant ou mot de passe incorrect" });
+        .json({ error: "Identifiant ou mot de passe incorrect." });
     }
 
     // Vérifier le mot de passe
@@ -96,34 +93,19 @@ const signin = async (req, res) => {
     if (!isPasswordValid) {
       return res
         .status(400)
-        .json({ error: "Identifiant ou mot de passe incorrect" });
+        .json({ error: "Identifiant ou mot de passe incorrect." });
     }
 
     // Générer un token JWT
     const token = generateToken(user);
-    console.log("token: ", token);
 
     // Envoyer le cookie avec des options sécurisées
-    // res.cookie("token", token, { httpOnly: true })
-    // Envoyer le token dans un cookie
     res
       .cookie("token", token, {
-        // httpOnly: true,
-        // secure: process.env.NODE_ENV === "production",
-        // sameSite: "strict",
-        // maxAge: 7 * 24 * 60 * 60 * 1000,
-        // path: "/",
-        // domain:
-        //   process.env.NODE_ENV === "production"
-        //     ? "jopha-front.vercel.app"
-        //     : "localhost",
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production", // Secure en prod
-        // sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // Important !
-        sameSite: "none", // Permet le cross-origin entre backend et frontend
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "none",
         maxAge: 7 * 24 * 60 * 60 * 1000,
-        // domain:
-        //   process.env.NODE_ENV === "production" ? ".onrender.com" : "localhost", // Pour que le cookie soit valide
       })
       .json({
         user: {
@@ -135,7 +117,25 @@ const signin = async (req, res) => {
       });
   } catch (error) {
     console.error("Erreur lors de la connexion:", error);
-    res.status(500).json({ error: "Erreur interne du serveur" });
+
+    // Gestion des erreurs réseau ou serveur
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      return res.status(500).json({
+        error: "Erreur de base de données. Veuillez réessayer plus tard.",
+      });
+    }
+
+    // Erreur réseau
+    if (error.code === "ECONNREFUSED" || error.code === "ETIMEDOUT") {
+      return res.status(503).json({
+        error: "Le serveur est indisponible. Veuillez réessayer plus tard.",
+      });
+    }
+
+    // Erreur générique
+    res
+      .status(500)
+      .json({ error: "Une erreur interne est survenue. Veuillez réessayer." });
   }
 };
 

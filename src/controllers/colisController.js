@@ -6,28 +6,49 @@ const createColis = async (req, res) => {
     nom_complet,
     tracking_code,
     poids_colis,
+    volume,
     telephone,
     transportType,
     airType,
-    // clientAvecCode,
     itemType,
   } = req.body;
+
   console.log(req.body);
 
   try {
-    // **Création du colis avec validations des champs optionnels**
+    // **Validation des champs obligatoires**
+    if (!nom_complet || !tracking_code || !telephone) {
+      return res.status(400).json({
+        error:
+          "Les champs 'nom_complet', 'tracking_code' et 'telephone' sont obligatoires.",
+      });
+    }
+
+    // **Définir les valeurs de poids_colis et volume en fonction du type de transport**
+    let poidsColisFinal = null;
+    let volumeFinal = null;
+
+    if (transportType === "AERIEN") {
+      poidsColisFinal = poids_colis || "0"; // Si AERIEN, utiliser poids_colis
+      volumeFinal = null; // Volume non utilisé pour AERIEN
+    } else if (transportType === "MARITIME") {
+      volumeFinal = volume || "0"; // Si MARITIME, utiliser volume
+      poidsColisFinal = null; // poids_colis non utilisé pour MARITIME
+    }
+
+    // **Création du colis**
     const colis = await prisma.colis.create({
       data: {
         code: code?.trim() || null,
         nom_complet: nom_complet.trim(),
         tracking_code: tracking_code.trim(),
-        poids_colis: poids_colis || null, // Conversion en Decimal
+        poids_colis: poidsColisFinal, // Utiliser la valeur définie
+        volume: volumeFinal, // Utiliser la valeur définie
         telephone: telephone.trim(),
         transportType: transportType || null,
         airType: airType || null,
-        // clientAvecCodeId: clientId,
         itemType: itemType || null,
-        status: "RECEIVED", // Ajout du statut par défaut
+        status: "RECEIVED", // Statut par défaut
       },
     });
 
@@ -37,9 +58,9 @@ const createColis = async (req, res) => {
       colis,
     });
   } catch (error) {
-    // **Gestion détaillée des erreurs Prisma et autres**
+    // **Gestion des erreurs Prisma**
     if (error.code === "P2002") {
-      // Erreur d'unicité Prisma
+      // Erreur d'unicité Prisma (tracking_code déjà existant)
       return res.status(409).json({
         error: "Un colis avec le même tracking_code existe déjà.",
       });
@@ -53,7 +74,6 @@ const createColis = async (req, res) => {
     });
   }
 };
-
 const updateColis = async (req, res) => {
   const { id } = req.params;
   console.log(id);
@@ -787,26 +807,29 @@ const getAdvancedFilteredColis = async (req, res) => {
       tracking_code,
       nom_complet,
       telephone,
-      
+
       // Paramètres de statut et type
       status,
       transportType,
       airType,
       itemType,
-      
+
+      // Paramètre de groupage
+      groupageCode, // Nouveau paramètre pour filtrer par code de groupage
+
       // Paramètres de date
       dateType, // 'created' ou 'updated'
       date, // Date unique
       startDate,
       endDate,
-      
+
       // Paramètres de pagination
       page = 1,
       limit = 50,
-      
+
       // Paramètres de tri
-      sortBy = 'createdAt',
-      sortOrder = 'desc'
+      sortBy = "createdAt",
+      sortOrder = "desc",
     } = req.query;
 
     // Construction de la clause where
@@ -814,16 +837,26 @@ const getAdvancedFilteredColis = async (req, res) => {
 
     // Filtres basiques avec recherche insensible à la casse
     if (code) {
-      whereClause.code = { contains: code, mode: 'insensitive' };
+      whereClause.code = { contains: code, mode: "insensitive" };
     }
     if (tracking_code) {
-      whereClause.tracking_code = { contains: tracking_code, mode: 'insensitive' };
+      whereClause.tracking_code = {
+        contains: tracking_code,
+        mode: "insensitive",
+      };
     }
     if (nom_complet) {
-      whereClause.nom_complet = { contains: nom_complet, mode: 'insensitive' };
+      whereClause.nom_complet = { contains: nom_complet, mode: "insensitive" };
     }
     if (telephone) {
-      whereClause.telephone = { contains: telephone, mode: 'insensitive' };
+      whereClause.telephone = { contains: telephone, mode: "insensitive" };
+    }
+
+    // Filtre par code de groupage
+    if (groupageCode) {
+      whereClause.groupage = {
+        code: groupageCode,
+      };
     }
 
     // Filtres de statut et type
@@ -841,13 +874,13 @@ const getAdvancedFilteredColis = async (req, res) => {
     }
 
     // Gestion des dates
-    const dateField = dateType === 'updated' ? 'updatedAt' : 'createdAt';
-    
+    const dateField = dateType === "updated" ? "updatedAt" : "createdAt";
+
     if (date) {
       const searchDate = new Date(date);
       whereClause[dateField] = {
         gte: searchDate,
-        lt: new Date(searchDate.getTime() + 24 * 60 * 60 * 1000), // Ajoute 24 heures
+        lt: new Date(searchDate.getTime() + 24 * 60 * 60 * 1000),
       };
     } else if (startDate && endDate) {
       whereClause[dateField] = {
@@ -870,7 +903,16 @@ const getAdvancedFilteredColis = async (req, res) => {
         where: whereClause,
         include: {
           masterPack: true,
-          groupage: true,
+          groupage: {
+            select: {
+              id: true,
+              code: true,
+              status: true,
+              transportType: true,
+              airType: true,
+              createdAt: true,
+            },
+          },
           clientAvecCode: true,
           notes: {
             include: {
@@ -878,24 +920,24 @@ const getAdvancedFilteredColis = async (req, res) => {
                 select: {
                   username: true,
                   email: true,
-                }
-              }
+                },
+              },
             },
             orderBy: {
-              createdAt: 'desc'
-            }
+              createdAt: "desc",
+            },
           },
           invoiceItems: {
             include: {
-              invoice: true
-            }
-          }
+              invoice: true,
+            },
+          },
         },
         orderBy,
         skip,
         take: Number(limit),
       }),
-      prisma.colis.count({ where: whereClause })
+      prisma.colis.count({ where: whereClause }),
     ]);
 
     // Calcul des métadonnées de pagination
@@ -912,7 +954,7 @@ const getAdvancedFilteredColis = async (req, res) => {
         totalPages,
         hasNextPage,
         hasPrevPage,
-        limit: Number(limit)
+        limit: Number(limit),
       },
       filters: {
         dateType,
@@ -920,17 +962,17 @@ const getAdvancedFilteredColis = async (req, res) => {
         transportType,
         airType,
         itemType,
+        groupageCode, // Ajout du filtre groupageCode dans la réponse
         sortBy,
-        sortOrder
-      }
+        sortOrder,
+      },
     });
-
   } catch (error) {
     console.error("Erreur lors de la recherche avancée des colis:", error);
     res.status(500).json({
       success: false,
       error: "Erreur lors de la recherche des colis",
-      details: error.message
+      details: error.message,
     });
   }
 };

@@ -26,7 +26,7 @@ async function main() {
 
     await prisma.colis.create({
       data: {
-        code: faker.string.uuid(8), // Utilisation de faker.string.uuid() pour Faker.js moderne
+        // code: faker.string.uuid(8), // Utilisation de faker.string.uuid() pour Faker.js moderne
         nom_complet: faker.person.fullName(),
         status: "RECEIVED",
         tracking_code: faker.string.alphanumeric(10), // Génère un code alphanumérique

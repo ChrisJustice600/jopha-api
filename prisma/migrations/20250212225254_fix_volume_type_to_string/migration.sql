@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Colis" ALTER COLUMN "poids_colis" DROP NOT NULL,
+ALTER COLUMN "volume" SET DATA TYPE TEXT;
