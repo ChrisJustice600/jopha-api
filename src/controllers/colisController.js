@@ -59,6 +59,9 @@ const updateColis = async (req, res) => {
   console.log(id);
 
   const data = req.body;
+
+  console.log("data update: ", data);
+
   try {
     const colis = await prisma.colis.findUnique({
       where: { id: parseInt(id) },
@@ -75,7 +78,7 @@ const updateColis = async (req, res) => {
       telephone: data.telephone,
       transportType: data.transportType,
       airType: data.airType,
-      itemType: data.itemTypeType,
+      itemType: data.itemType,
       Status: data.status,
     });
     res
@@ -720,6 +723,62 @@ const getParcelById = async (req, res) => {
     res.status(500).json({ error: "Erreur interne du serveur" });
   }
 };
+
+const getColisByStatus = async (req, res) => {
+  try {
+    const { status } = req.query;
+
+    // Validation du statut
+    const validStatus = [
+      "RECEIVED",
+      "GROUPED",
+      "IN_TRANSIT",
+      "ARRIVED",
+      "DELIVERED",
+    ];
+    if (status && !validStatus.includes(status)) {
+      return res.status(400).json({
+        error:
+          "Statut invalide. Les statuts valides sont : RECEIVED, GROUPED, IN_TRANSIT, ARRIVED, DELIVERED",
+      });
+    }
+
+    // Construction de la clause where
+    const whereClause = status ? { status } : {};
+
+    // Récupération des colis
+    const colis = await prisma.colis.findMany({
+      where: whereClause,
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        masterPack: true,
+        groupage: true,
+        clientAvecCode: true,
+        notes: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      count: colis.length,
+      data: colis,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la récupération des colis :", error);
+    res.status(500).json({
+      success: false,
+      error: "Erreur lors de la récupération des colis",
+      details: error.message,
+    });
+  }
+};
+
 module.exports = {
   createColis,
   updateColis,
@@ -735,4 +794,5 @@ module.exports = {
   createNewMasterPackInGroupage,
   addParcelToSpecificMasterPack,
   deleteMasterPack,
+  getColisByStatus,
 };

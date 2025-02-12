@@ -57,4 +57,6 @@ authRouter.get(
 
 authRouter.get("/filtered", colisController.getFilteredColis);
 
+authRouter.get("/getColisByStatus", colisController.getColisByStatus);
+
 module.exports = authRouter;

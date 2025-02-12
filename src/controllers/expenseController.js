@@ -164,6 +164,7 @@ const getDailyExpenseReport = async (req, res) => {
 
     // Réponse JSON avec rapport et dépenses associées
     return res.json({
+      id: report.id,
       reportNumber: report.reportNumber,
       totalUSD: report.totalUSD,
       totalCDF: report.totalCDF,
